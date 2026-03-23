@@ -1,0 +1,19 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# ChromaDB local store
+backend/chroma_db/
+
+# Node
+node_modules/
+.next/
+
+# OS
+.DS_Store

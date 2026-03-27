@@ -54,6 +54,23 @@ export default function Home() {
     [input, loading],
   );
 
+  const handleFeedback = useCallback(
+    async (messageId: string, rating: number, notes: string) => {
+      const idx = messages.findIndex((m) => m.id === messageId);
+      if (idx < 0) return;
+      const assistantMsg = messages[idx];
+      const userMsg = messages.slice(0, idx).reverse().find((m) => m.role === "user");
+      if (!userMsg) return;
+
+      await fetch(`${API_URL}/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: userMsg.content, output: assistantMsg.content, rating, notes }),
+      });
+    },
+    [messages],
+  );
+
   const handleNewChat = useCallback(() => {
     setMessages([]);
     setInput("");
@@ -67,6 +84,7 @@ export default function Home() {
         input={input}
         setInput={setInput}
         onSend={send}
+        onFeedback={handleFeedback}
         loading={loading}
         scrollRef={scrollRef}
       />

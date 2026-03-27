@@ -10,6 +10,7 @@ interface ChatAreaProps {
   input: string;
   setInput: (value: string) => void;
   onSend: (e: FormEvent) => void;
+  onFeedback: (messageId: string, rating: number, notes: string) => Promise<void>;
   loading: boolean;
   scrollRef: RefObject<HTMLDivElement | null>;
 }
@@ -19,6 +20,7 @@ export default function ChatArea({
   input,
   setInput,
   onSend,
+  onFeedback,
   loading,
   scrollRef,
 }: ChatAreaProps) {
@@ -31,7 +33,7 @@ export default function ChatArea({
         <ThemeToggle />
       </header>
 
-      <MessageList messages={messages} loading={loading} scrollRef={scrollRef} />
+      <MessageList messages={messages} loading={loading} scrollRef={scrollRef} onFeedback={onFeedback} />
       <InputBar input={input} setInput={setInput} onSend={onSend} loading={loading} />
     </main>
   );

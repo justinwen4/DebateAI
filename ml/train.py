@@ -3,6 +3,7 @@ Phase 2 training scaffold — LoRA fine-tuning on debate analytics.
 
 This file is a placeholder for future fine-tuning of a local LLaMA model.
 The dataset.jsonl in this directory provides the training data.
+Each row should include: input, output, category, and mode ("normal" for tutor-style is primary; "debate_voice" optional/legacy).
 
 Usage (future):
     python train.py --base-model meta-llama/Llama-3-8B \

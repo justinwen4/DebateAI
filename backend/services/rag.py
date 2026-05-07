@@ -8,11 +8,14 @@ import chromadb
 
 COLLECTION_NAME = "debate_analytics"
 DB_DIR = os.path.join(os.path.dirname(__file__), "..", "chroma_db")
-DATASET_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "ml", "dataset.jsonl")
+DATASET_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "ml", "dataset.tutor.jsonl")
 HASH_FILE = os.path.join(DB_DIR, ".dataset_hash")
 
 Category = Literal["Theory", "Philosophy", "Kritik"]
+Mode = Literal["debate_voice", "normal"]
+
 CATEGORIES: frozenset[str] = frozenset({"Theory", "Philosophy", "Kritik"})
+MODES: frozenset[str] = frozenset({"debate_voice", "normal"})
 
 _client: chromadb.ClientAPI | None = None
 _collection: chromadb.Collection | None = None
@@ -76,9 +79,12 @@ def seed_from_dataset() -> int:
         cat = row.get("category", "")
         if cat not in CATEGORIES:
             raise ValueError(f"Row {i} has invalid category {cat!r}")
+        mode = row.get("mode", "")
+        if mode not in MODES:
+            raise ValueError(f"Row {i} has invalid mode {mode!r}")
         ids.append(f"doc_{i}")
         documents.append(row["input"])
-        metadatas.append({"output": row["output"], "category": cat})
+        metadatas.append({"output": row["output"], "category": cat, "mode": mode})
 
     if ids:
         col.add(ids=ids, documents=documents, metadatas=metadatas)
@@ -87,10 +93,18 @@ def seed_from_dataset() -> int:
     return len(ids)
 
 
-def retrieve(query: str, category: Category, n_results: int = 3) -> str:
-    """Return top-k debate analytics relevant to the query within a category."""
+def retrieve(
+    query: str,
+    category: Category,
+    n_results: int = 3,
+    *,
+    mode: Mode = "normal",
+) -> str:
+    """Return top-k debate analytics relevant to the query within a category and mode."""
     if category not in CATEGORIES:
         raise ValueError(f"Invalid category {category!r}")
+    if mode not in MODES:
+        raise ValueError(f"Invalid mode {mode!r}")
 
     col = _get_collection()
     if col.count() == 0:
@@ -99,7 +113,7 @@ def retrieve(query: str, category: Category, n_results: int = 3) -> str:
     results = col.query(
         query_texts=[query],
         n_results=min(n_results, col.count()),
-        where={"category": category},
+        where={"$and": [{"category": category}, {"mode": mode}]},
         include=["metadatas"],
     )
     metas = results.get("metadatas", [[]])[0]

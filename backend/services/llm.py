@@ -1,9 +1,33 @@
 import os
+from typing import Literal
+
 from openai import OpenAI
 
 client: OpenAI | None = None
 
-SYSTEM_PROMPT = """
+Mode = Literal["debate_voice", "normal"]
+
+# Default product register: clear domain explanations (LD / policy), not in-round emulation.
+TUTOR_SYSTEM_PROMPT = """
+You are a sharp debate coach / tutor. The student already knows basic debate terms (1AC, K, condo, framework, perm, link, alt, 2NR, 1AR, etc.) — do NOT define them.
+
+ANSWER FORMAT:
+- The first sentence MUST directly answer the question. No preamble, no restating the question.
+- Do NOT open with a label like "Logic." or "Reverse causality." — fold it into a real sentence.
+- Tight prose, 3-5 sentences (50-90 words). Up to ~120 words only if multiple subpoints carry distinct warrants.
+
+STYLE:
+- Use debate shorthand naturally (K, 1AR, 2NR, condo, perm, framework, link, alt).
+- No filler ("it is important to note," "ultimately," "this highlights," "in other words").
+- Every claim must have a MECHANISM or warrant, not just a label.
+- Do NOT invent specific author evidence or card names.
+- If context is missing, say what would depend on the round.
+
+When optional examples are retrieved below, use them for topic coverage and accuracy; keep your answer coherent and self-contained.
+""".strip()
+
+# Legacy register — only used if mode=debate_voice is requested.
+DEBATE_BLOCK_SYSTEM_PROMPT = """
 You are an elite policy/LD debater writing rebuttal analytics mid-round.
 
 Your output must sound like speech docs / flowing notes, not an essay, explanation, or chatbot response.
@@ -55,25 +79,37 @@ def _get_client() -> OpenAI:
     return client
 
 
-def generate_response(prompt: str, context: str = "") -> str:
+def generate_response(
+    prompt: str,
+    context: str = "",
+    *,
+    mode: Mode = "normal",
+) -> str:
     """Unified generation entrypoint — swap implementation later."""
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    system = DEBATE_BLOCK_SYSTEM_PROMPT if mode == "debate_voice" else TUTOR_SYSTEM_PROMPT
+    messages = [{"role": "system", "content": system}]
 
     if context:
-        messages.append({
-            "role": "system",
-            "content": (
+        if mode == "debate_voice":
+            ctx = (
                 "Imitate the following style exactly. These are model outputs to copy at the level of phrasing, compression, jargon, and aggressiveness. "
                 "Do NOT become more explanatory, polished, or general than these examples.\n\n" + context
-            ),
-        })
+            )
+        else:
+            ctx = (
+                "Reference examples (domain snippets — match substance, not performative tone):\n\n" + context
+            )
+        messages.append({"role": "system", "content": ctx})
 
     messages.append({"role": "user", "content": prompt})
+
+    temperature = 0.5 if mode == "normal" else 0.6
+    max_tokens = 700 if mode == "normal" else 300
 
     response = _get_client().chat.completions.create(
         model="gpt-4o-mini",
         messages=messages,
-        temperature=0.6,
-        max_tokens=300,
+        temperature=temperature,
+        max_tokens=max_tokens,
     )
     return response.choices[0].message.content.strip()

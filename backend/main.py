@@ -16,6 +16,7 @@ from services.llm import generate_response
 from services.rag import retrieve, seed_from_dataset
 
 Category = Literal["Theory", "Philosophy", "Kritik"]
+Mode = Literal["debate_voice", "normal"]
 
 FEEDBACK_PATH = os.path.join(os.path.dirname(__file__), "..", "ml", "feedback.jsonl")
 
@@ -40,6 +41,7 @@ app.add_middleware(
 class GenerateRequest(BaseModel):
     prompt: str
     category: Category
+    mode: Mode = "normal"
 
 
 class GenerateResponse(BaseModel):
@@ -48,8 +50,8 @@ class GenerateResponse(BaseModel):
 
 @app.post("/generate", response_model=GenerateResponse)
 async def generate(req: GenerateRequest):
-    context = retrieve(req.prompt, category=req.category)
-    output = generate_response(req.prompt, context=context)
+    context = retrieve(req.prompt, category=req.category, mode=req.mode)
+    output = generate_response(req.prompt, context=context, mode=req.mode)
     return GenerateResponse(output=output)
 
 

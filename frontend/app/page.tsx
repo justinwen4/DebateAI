@@ -4,7 +4,6 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import Sidebar from "./components/Sidebar";
 import ChatArea from "./components/ChatArea";
 import { Message } from "./components/MessageList";
-import { Category } from "./components/CategorySelector";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -12,7 +11,6 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [category, setCategory] = useState<Category>("Theory");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,7 +32,7 @@ export default function Home() {
         const res = await fetch(`${API_URL}/generate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: text, category }),
+          body: JSON.stringify({ prompt: text }),
         });
 
         if (!res.ok) throw new Error(`API error ${res.status}`);
@@ -53,7 +51,7 @@ export default function Home() {
         setLoading(false);
       }
     },
-    [input, loading, category],
+    [input, loading],
   );
 
   const handleFeedback = useCallback(
@@ -89,8 +87,6 @@ export default function Home() {
         onFeedback={handleFeedback}
         loading={loading}
         scrollRef={scrollRef}
-        category={category}
-        setCategory={setCategory}
       />
     </div>
   );

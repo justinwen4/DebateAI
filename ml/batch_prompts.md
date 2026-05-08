@@ -27,3 +27,78 @@ You are helping me build a training dataset for a debate tutoring AI. I need you
 5. Output ONLY valid JSONL — no markdown, no explanation, no commentary before or after
 6. Write ONLY to `ml/review_batch.jsonl` — do NOT touch `ml/dataset.tutor.jsonl`
 ```
+
+---
+
+### BATCH 19 — Disad structure and mechanics (Theory, 20 rows)
+
+```
+**For this batch, generate rows covering how disadvantages work. Category: "Theory". Topics:**
+
+- What a disad is and how its components fit together
+- Uniqueness — what it means and why it matters
+- How to answer non-unique
+- Link — what a link is and what makes it strong vs. weak
+- How to answer a link (link turn, no link, link non-unique)
+- Brink — what it is and how to use it
+- Internal link — how uniqueness connects to the impact
+- Impact — magnitude, probability, timeframe in the DA context
+- Linear vs. threshold disads — the difference and how to argue each
+- Politics DA — how it works and common answers
+- Turns case — why the DA turns the aff's internal links
+- Disad outweighs case — how to make the calculus argument
+- Impact turn — what it is and why it's risky
+- Double turn — why it's a concession
+- Timeframe framing on DAs — why short-term impacts can outweigh
+- How to answer a DA in the 1AR
+- 2NR strategy on a DA
+```
+
+---
+
+### BATCH 20 — Non-cognitivism and metaethics (Philosophy, 20 rows)
+
+```
+**For this batch, generate rows covering non-cognitivism and adjacent metaethics. Category: "Philosophy". Topics:**
+
+- What non-cognitivism is and how it differs from cognitivism
+- Emotivism — what it claims and why it's contested
+- Prescriptivism — Hare's view and its problems
+- Expressivism — what it adds over simple emotivism
+- The Frege-Geach problem — why it's a serious objection to non-cognitivism
+- How to answer the Frege-Geach problem
+- Why non-cognitivism undermines moral debate
+- Why non-cognitivism can be turned — if moral claims aren't truth-apt, framework debates collapse
+- Error theory vs. non-cognitivism — the key difference
+- Why moral realism is preferable to non-cognitivism
+- Quasi-realism — what Blackburn claims and whether it succeeds
+- Non-cognitivism and moral progress — can non-cognitivists account for it
+- How to deploy non-cognitivism as a neg argument against phil frameworks
+- How to answer non-cognitivism as the aff
+- Non-cognitivism's relationship to relativism
+```
+
+---
+
+### BATCH 21 — Ableism K (Kritik, 20 rows)
+
+```
+**For this batch, generate rows covering the ableism kritik. Category: "Kritik". Topics:**
+
+- What the ableism K claims and how it functions in a round
+- The medical model vs. the social model of disability — why the K prefers the social model
+- How policy debate reproduces ableist assumptions
+- The link to policy affs — how solvency and impact framing assumes able-bodied norms
+- Crip theory — what it contributes beyond the social model
+- The alt — what rejecting ableist frameworks looks like in practice
+- How to answer "the aff helps disabled people"
+- How to answer "we need policy solutions for disability"
+- Framework against the ableism K — why the judge should evaluate policy impacts
+- Perm: do the aff and the alt — how neg answers it
+- Why the ableism K is not identity politics but structural critique
+- Intersectionality — how ableism interacts with race, gender, class
+- Productivity as ableist — how economic frameworks exclude disabled people
+- The link to extinction impacts — why ableism K outweighs
+- How to extend the ableism K in the 2NR
+- How to answer the ableism K in the 1AR
+```

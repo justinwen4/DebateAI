@@ -11,10 +11,8 @@ DB_DIR = os.path.join(os.path.dirname(__file__), "..", "chroma_db")
 DATASET_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "ml", "dataset.tutor.jsonl")
 HASH_FILE = os.path.join(DB_DIR, ".dataset_hash")
 
-Category = Literal["Theory", "Philosophy", "Kritik"]
 Mode = Literal["debate_voice", "normal"]
 
-CATEGORIES: frozenset[str] = frozenset({"Theory", "Philosophy", "Kritik"})
 MODES: frozenset[str] = frozenset({"debate_voice", "normal"})
 
 _client: chromadb.ClientAPI | None = None
@@ -76,15 +74,12 @@ def seed_from_dataset() -> int:
     ids, documents, metadatas = [], [], []
     for i, line in enumerate(path.read_text().strip().splitlines()):
         row = json.loads(line)
-        cat = row.get("category", "")
-        if cat not in CATEGORIES:
-            raise ValueError(f"Row {i} has invalid category {cat!r}")
         mode = row.get("mode", "")
         if mode not in MODES:
             raise ValueError(f"Row {i} has invalid mode {mode!r}")
         ids.append(f"doc_{i}")
         documents.append(row["input"])
-        metadatas.append({"output": row["output"], "category": cat, "mode": mode})
+        metadatas.append({"output": row["output"], "mode": mode})
 
     if ids:
         col.add(ids=ids, documents=documents, metadatas=metadatas)
@@ -95,14 +90,11 @@ def seed_from_dataset() -> int:
 
 def retrieve(
     query: str,
-    category: Category,
     n_results: int = 3,
     *,
     mode: Mode = "normal",
 ) -> str:
-    """Return top-k debate analytics relevant to the query within a category and mode."""
-    if category not in CATEGORIES:
-        raise ValueError(f"Invalid category {category!r}")
+    """Return top-k debate analytics relevant to the query."""
     if mode not in MODES:
         raise ValueError(f"Invalid mode {mode!r}")
 
@@ -113,7 +105,7 @@ def retrieve(
     results = col.query(
         query_texts=[query],
         n_results=min(n_results, col.count()),
-        where={"$and": [{"category": category}, {"mode": mode}]},
+        where={"mode": mode},
         include=["metadatas"],
     )
     metas = results.get("metadatas", [[]])[0]

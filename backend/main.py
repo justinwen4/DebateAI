@@ -1,24 +1,31 @@
-import json
 import os
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Literal
 
 from pydantic import BaseModel, Field
+from supabase import create_client, Client
 
 load_dotenv()
 
 from services.llm import generate_response
 from services.rag import retrieve, seed_from_dataset
 
-Category = Literal["Theory", "Philosophy", "Kritik"]
 Mode = Literal["debate_voice", "normal"]
 
-FEEDBACK_PATH = os.path.join(os.path.dirname(__file__), "..", "ml", "feedback.jsonl")
+_supabase: Client | None = None
+
+
+def _get_supabase() -> Client:
+    global _supabase
+    if _supabase is None:
+        url = os.environ["SUPABASE_URL"]
+        key = os.environ["SUPABASE_KEY"]
+        _supabase = create_client(url, key)
+    return _supabase
 
 
 @asynccontextmanager
@@ -40,7 +47,6 @@ app.add_middleware(
 
 class GenerateRequest(BaseModel):
     prompt: str
-    category: Category
     mode: Mode = "normal"
 
 
@@ -50,7 +56,7 @@ class GenerateResponse(BaseModel):
 
 @app.post("/generate", response_model=GenerateResponse)
 async def generate(req: GenerateRequest):
-    context = retrieve(req.prompt, category=req.category, mode=req.mode)
+    context = retrieve(req.prompt, mode=req.mode)
     output = generate_response(req.prompt, context=context, mode=req.mode)
     return GenerateResponse(output=output)
 
@@ -64,13 +70,13 @@ class FeedbackRequest(BaseModel):
 
 @app.post("/feedback")
 async def feedback(req: FeedbackRequest):
-    entry = {
-        "prompt": req.prompt,
-        "bad_output": req.output,
-        "rating": req.rating,
-        "notes": req.notes,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    }
-    with open(FEEDBACK_PATH, "a") as f:
-        f.write(json.dumps(entry) + "\n")
+    try:
+        _get_supabase().table("feedback").insert({
+            "prompt": req.prompt,
+            "bad_output": req.output,
+            "rating": req.rating,
+            "notes": req.notes,
+        }).execute()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save feedback: {e}")
     return {"status": "ok"}

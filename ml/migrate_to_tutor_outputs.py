@@ -22,9 +22,13 @@ import argparse
 import json
 import os
 import shutil
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from llm_utils import chat_completion
 
 
 REWRITE_SYSTEM = """You are a debate tutor assistant rewriting an answer to a student's debate question. \
@@ -73,16 +77,15 @@ def _rewrite_openai(
     client,
     model: str,
     question: str,
-    category: str,
     raw_output: str,
 ) -> str:
     user_msg = (
-        f"STUDENT QUESTION: {question.strip()}\n"
-        f"CATEGORY: {category.strip()}\n\n"
+        f"STUDENT QUESTION: {question.strip()}\n\n"
         f"ORIGINAL ANSWER (rewrite this into an answer-first reply to the question above):\n"
         f"{raw_output.strip()}"
     )
-    r = client.chat.completions.create(
+    r = chat_completion(
+        client,
         model=model,
         messages=[
             {"role": "system", "content": REWRITE_SYSTEM},
@@ -99,7 +102,7 @@ def main() -> None:
     parser.add_argument(
         "--dataset",
         type=Path,
-        default=Path(__file__).resolve().parent / "dataset.jsonl",
+        default=Path(__file__).resolve().parent / "dataset.tutor.jsonl",
     )
     parser.add_argument(
         "--output",
@@ -165,8 +168,7 @@ def main() -> None:
         for i in range(start, end):
             old = rows[i].get("output", "")
             q = rows[i].get("input", "")
-            cat = str(rows[i].get("category", ""))
-            new = _rewrite_openai(client, args.model, q, cat, old)
+            new = _rewrite_openai(client, args.model, q, old)
             print(f"======== Row {i} ========")
             print(f"--- question ---\n{q}\n")
             print("--- original ---\n", old[:800], "..." if len(old) > 800 else "", "\n", sep="")
@@ -209,7 +211,6 @@ def main() -> None:
             client,
             args.model,
             row.get("input", ""),
-            str(row.get("category", "")),
             row.get("output", ""),
         )
         row["mode"] = "normal"

@@ -25,7 +25,9 @@ function FeedbackButton({ messageId, onFeedback }: { messageId: string; onFeedba
   const submit = () => {
     if (!rating) return;
     setState("saving");
-    onFeedback(messageId, rating, notes).then(() => setState("saved"));
+    onFeedback(messageId, rating, notes)
+      .then(() => setState("saved"))
+      .catch(() => setState("open"));
   };
 
   if (state === "saved") {

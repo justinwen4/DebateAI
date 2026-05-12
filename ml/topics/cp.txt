@@ -1,0 +1,39 @@
+# Counterplan competition
+
+# Basic competition
+Mutual exclusivity
+Net benefits competition
+Opportunity cost model
+Textual competition
+Functional competition
+Artificial competition
+Competition through solvency deficit
+Competition through DA net benefit
+Competition through internal net benefit
+
+# Types of counterplans
+PICs
+Agent CPs
+Process CPs
+Consult CPs
+Conditions CPs
+Delay CPs
+Advantage CPs
+States CP
+Courts CP
+International actor CP
+Private actor CP
+Word PICs / plan-inclusive counterplans
+Object fiat CPs
+Negative fiat theory
+
+# Permutation theory
+Perm do both
+Perm do the CP
+Perm: plan plus non-mutually-exclusive parts
+Severance perms
+Intrinsic perms
+Textual versus functional competition
+Perm shields the link
+Perm double bind
+Permutation as test of competition, not advocacy

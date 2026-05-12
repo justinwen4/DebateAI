@@ -17,9 +17,13 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 import textwrap
 import time
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from llm_utils import chat_completion
 
 
 SYSTEM = """You label debate tutoring examples with a short situational prefix, then the student's question.
@@ -37,20 +41,20 @@ Rules:
 - Output ONLY the single prefixed question line. No quotes, no markdown, no explanation."""
 
 
-def _enrich(client, model: str, category: str, question: str, answer: str) -> str:
+def _enrich(client, model: str, question: str, answer: str) -> str:
     answer_excerpt = answer.strip()
     if len(answer_excerpt) > 1200:
         answer_excerpt = answer_excerpt[:1200] + "…"
     user = textwrap.dedent(
         f"""\
-        category: {category}
         current_question: {question.strip()}
 
         answer_for_inference:
         {answer_excerpt}
         """
     )
-    r = client.chat.completions.create(
+    r = chat_completion(
+        client,
         model=model,
         messages=[
             {"role": "system", "content": SYSTEM},
@@ -91,7 +95,6 @@ def main() -> None:
             enriched = _enrich(
                 client,
                 args.model,
-                str(row.get("category", "")),
                 q,
                 str(row.get("output", "")),
             )

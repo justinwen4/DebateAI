@@ -29,6 +29,9 @@ import time
 from pathlib import Path
 from typing import Iterable
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from llm_utils import chat_completion
+
 try:
     from docx import Document
     from docx.shared import Pt
@@ -73,10 +76,9 @@ Tag rules inside the brackets:
 
 Other fields:
 - "output": the analytic text, mostly verbatim. Light cleanup only (strip bullets, fix whitespace, merge obviously-split lines, keep A]/B]/C] markers). DO NOT paraphrase or add new claims.
-- "category": one of Kritik, Theory, T, DA, CP, Case, Framework, Topicality, or a close synonym. Infer from content.
 
 Return STRICT JSON and NOTHING else:
-  {"items": [{"input": "[tags] question?", "output": "...", "category": "..."}, ...]}
+  {"items": [{"input": "[tags] question?", "output": "..."}, ...]}
 If the entire block is warrant-only fragments with no parent claim, return {"items": []}.
 """
 
@@ -229,7 +231,8 @@ def _group_analytics(paragraphs, tag_style: str):
 
 
 def _call_llm(client, model: str, block: str) -> list[dict]:
-    r = client.chat.completions.create(
+    r = chat_completion(
+        client,
         model=model,
         messages=[
             {"role": "system", "content": SYSTEM},
@@ -250,9 +253,8 @@ def _call_llm(client, model: str, block: str) -> list[dict]:
     for it in items:
         inp = (it.get("input") or "").strip()
         out = (it.get("output") or "").strip()
-        cat = (it.get("category") or "").strip() or "Unknown"
         if inp and out:
-            cleaned.append({"input": inp, "output": out, "category": cat, "mode": "normal"})
+            cleaned.append({"input": inp, "output": out, "mode": "normal"})
     return cleaned
 
 

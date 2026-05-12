@@ -1,0 +1,28 @@
+# Dense theory / theory shells
+
+# Core shell structure
+Interpretation, violation, standards, voters
+Reasonability versus competing interpretations
+Drop the debater versus drop the argument
+RVIs: theory bad, frivolous theory bad, necessary check on abuse, no-risk offense problem
+
+# Paradigm issues
+Competing interps versus reasonability
+Norm-setting versus in round abuse
+Reject the team versus reject the argument
+
+# Advanced theory topics
+Condo bad/good
+Dispo versus condo versus unconditional advocacy
+PICs bad/good
+Process counterplans bad
+Agent counterplans bad
+Consult/condition counterplans bad
+Delay counterplans bad
+Floating PIKs bad
+Vague alts bad
+New affs bad/good
+Nebel T
+Spec shells: actor spec, agent spec, plan flaw, ROB spec, solvency advocate spec
+Disclosure theory, open-source disclosure, round reports, cites, paraphrasing, broken links
+Skep triggers and permissibility

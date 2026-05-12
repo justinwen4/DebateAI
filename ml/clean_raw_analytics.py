@@ -26,6 +26,9 @@ import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from llm_utils import chat_completion
+
 
 SYSTEM = """You clean a jsonl of debate tutoring Q/A rows. You receive a CHUNK of consecutive rows (with their original idx). Return a cleaned JSON array of rows.
 
@@ -73,7 +76,7 @@ REFERENCE EXAMPLES — these show the target style:
 OUTPUT RULES: input MUST be "[Part1 · Part2 · Part3] question?" with brackets, middle dot ·, and a real question ending in ?. Keep "mode": "normal" on every row. Output text is mostly verbatim — do not paraphrase or invent.
 
 Return STRICT JSON and NOTHING else:
-  {"rows": [{"input": "...", "output": "...", "category": "...", "mode": "normal"}, ...]}
+  {"rows": [{"input": "...", "output": "...", "mode": "normal"}, ...]}
 
 The returned rows may be FEWER than the input (due to merges); never more.
 """
@@ -90,7 +93,6 @@ def _format_chunk(rows: list[dict], start_idx: int) -> str:
                 "idx": start_idx + i,
                 "input": r.get("input", ""),
                 "output": r.get("output", ""),
-                "category": r.get("category", ""),
             }
             for i, r in enumerate(rows)
         ],
@@ -100,7 +102,8 @@ def _format_chunk(rows: list[dict], start_idx: int) -> str:
 
 
 def _call_llm(client, model: str, chunk_json: str) -> list[dict]:
-    r = client.chat.completions.create(
+    r = chat_completion(
+        client,
         model=model,
         messages=[
             {"role": "system", "content": SYSTEM},
@@ -121,10 +124,9 @@ def _call_llm(client, model: str, chunk_json: str) -> list[dict]:
     for it in rows:
         inp = (it.get("input") or "").strip()
         out = (it.get("output") or "").strip()
-        cat = (it.get("category") or "").strip() or "Unknown"
         if not (inp and out):
             continue
-        row = {"input": inp, "output": out, "category": cat, "mode": "normal"}
+        row = {"input": inp, "output": out, "mode": "normal"}
         flag = (it.get("flag") or "").strip()
         if flag:
             row["flag"] = flag
@@ -175,6 +177,8 @@ def main() -> None:
         chunk_json = _format_chunk(chunk, i)
         out_rows = _call_llm(client, args.model, chunk_json)
         if not out_rows:
+            print(f"  chunk {chunk_num} (rows {i}-{end - 1}): LLM returned nothing — passing {len(chunk)} rows through unchanged", file=sys.stderr)
+            cleaned.extend({"input": r.get("input", ""), "output": r.get("output", ""), "mode": r.get("mode", "normal")} for r in chunk if r.get("input") and r.get("output"))
             i = end
             continue
         if overlap and cleaned and i > 0:

@@ -6,9 +6,9 @@ A chatbot that generates high-quality, natural-sounding debate analytics in the 
 
 | Layer    | Tech                                |
 |----------|-------------------------------------|
-| Frontend | Next.js 15, TypeScript, TailwindCSS |
+| Frontend | Next.js 16, TypeScript, TailwindCSS |
 | Backend  | FastAPI, Python                     |
-| LLM      | OpenAI API (gpt-4o-mini)           |
+| LLM      | OpenAI API (gpt-4o)                 |
 | RAG      | ChromaDB (local vector store)       |
 | Training | LoRA fine-tuning scaffold (Phase 2) |
 
@@ -24,7 +24,7 @@ cp .env.example .env   # add your OpenAI key
 uvicorn main:app --reload
 ```
 
-The API runs at `http://localhost:8000`. On startup it seeds the vector store from `ml/dataset.jsonl`.
+The API runs at `http://localhost:8000`. On startup it seeds the vector store from `ml/dataset.tutor.jsonl`.
 
 ### 2. Frontend
 
@@ -58,7 +58,8 @@ Open `http://localhost:3000`.
     rag.py             # ChromaDB retrieval
 /frontend              # Next.js chat UI
 /ml
-  dataset.jsonl        # debate training data
+  dataset.tutor.jsonl  # debate training data (production corpus)
+  llm_utils.py         # shared OpenAI retry helper
   train.py             # LoRA fine-tuning scaffold
 ```
 

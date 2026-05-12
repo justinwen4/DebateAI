@@ -4,7 +4,6 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Literal
 
 from pydantic import BaseModel, Field
 from supabase import create_client, Client
@@ -13,8 +12,6 @@ load_dotenv()
 
 from services.llm import generate_response
 from services.rag import retrieve, seed_from_dataset
-
-Mode = Literal["debate_voice", "normal"]
 
 _supabase: Client | None = None
 
@@ -47,7 +44,6 @@ app.add_middleware(
 
 class GenerateRequest(BaseModel):
     prompt: str
-    mode: Mode = "normal"
 
 
 class GenerateResponse(BaseModel):
@@ -56,8 +52,11 @@ class GenerateResponse(BaseModel):
 
 @app.post("/generate", response_model=GenerateResponse)
 async def generate(req: GenerateRequest):
-    context = retrieve(req.prompt, mode=req.mode)
-    output = generate_response(req.prompt, context=context, mode=req.mode)
+    try:
+        context = retrieve(req.prompt)
+        output = generate_response(req.prompt, context=context)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Generation failed: {e}")
     return GenerateResponse(output=output)
 
 

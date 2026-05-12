@@ -62,11 +62,12 @@ export default function Home() {
       const userMsg = messages.slice(0, idx).reverse().find((m) => m.role === "user");
       if (!userMsg) return;
 
-      await fetch(`${API_URL}/feedback`, {
+      const res = await fetch(`${API_URL}/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: userMsg.content, output: assistantMsg.content, rating, notes }),
       });
+      if (!res.ok) throw new Error(`Feedback error ${res.status}`);
     },
     [messages],
   );

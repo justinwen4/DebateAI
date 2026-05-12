@@ -2,7 +2,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-from typing import Literal
 
 import chromadb
 
@@ -10,10 +9,6 @@ COLLECTION_NAME = "debate_analytics"
 DB_DIR = os.path.join(os.path.dirname(__file__), "..", "chroma_db")
 DATASET_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "ml", "dataset.tutor.jsonl")
 HASH_FILE = os.path.join(DB_DIR, ".dataset_hash")
-
-Mode = Literal["debate_voice", "normal"]
-
-MODES: frozenset[str] = frozenset({"debate_voice", "normal"})
 
 _client: chromadb.ClientAPI | None = None
 _collection: chromadb.Collection | None = None
@@ -54,7 +49,7 @@ def _save_hash(path: Path) -> None:
 
 
 def seed_from_dataset() -> int:
-    """Load dataset.jsonl into Chroma, reseeding if the file changed."""
+    """Load dataset.tutor.jsonl into Chroma, reseeding if the file changed."""
     path = Path(DATASET_PATH)
     if not path.exists():
         return 0
@@ -74,12 +69,9 @@ def seed_from_dataset() -> int:
     ids, documents, metadatas = [], [], []
     for i, line in enumerate(path.read_text().strip().splitlines()):
         row = json.loads(line)
-        mode = row.get("mode", "")
-        if mode not in MODES:
-            raise ValueError(f"Row {i} has invalid mode {mode!r}")
         ids.append(f"doc_{i}")
         documents.append(row["input"])
-        metadatas.append({"output": row["output"], "mode": mode})
+        metadatas.append({"output": row["output"]})
 
     if ids:
         col.add(ids=ids, documents=documents, metadatas=metadatas)
@@ -88,16 +80,8 @@ def seed_from_dataset() -> int:
     return len(ids)
 
 
-def retrieve(
-    query: str,
-    n_results: int = 3,
-    *,
-    mode: Mode = "normal",
-) -> str:
+def retrieve(query: str, n_results: int = 3) -> str:
     """Return top-k debate analytics relevant to the query."""
-    if mode not in MODES:
-        raise ValueError(f"Invalid mode {mode!r}")
-
     col = _get_collection()
     if col.count() == 0:
         return ""
@@ -105,7 +89,6 @@ def retrieve(
     results = col.query(
         query_texts=[query],
         n_results=min(n_results, col.count()),
-        where={"mode": mode},
         include=["metadatas"],
     )
     metas = results.get("metadatas", [[]])[0]

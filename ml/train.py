@@ -82,8 +82,7 @@ def main() -> None:
         from unsloth import FastLanguageModel
         from unsloth.chat_templates import get_chat_template
         from datasets import Dataset
-        from trl import SFTTrainer
-        from transformers import TrainingArguments
+        from trl import SFTConfig, SFTTrainer
     except ImportError:
         raise SystemExit(
             "Missing dependencies. Install with:\n"
@@ -156,12 +155,12 @@ def main() -> None:
     output_dir = args.output_dir
     os.makedirs(output_dir, exist_ok=True)
 
-    training_args = TrainingArguments(
+    training_args = SFTConfig(
         output_dir=output_dir,
         num_train_epochs=args.epochs,
         per_device_train_batch_size=args.batch_size,
         gradient_accumulation_steps=GRAD_ACCUM,
-        warmup_ratio=WARMUP_RATIO,
+        warmup_steps=WARMUP_RATIO,
         learning_rate=args.lr,
         weight_decay=WEIGHT_DECAY,
         fp16=True,
@@ -172,25 +171,17 @@ def main() -> None:
         metric_for_best_model="eval_loss",
         report_to="none",
         seed=42,
+        max_seq_length=MAX_SEQ_LEN,
+        dataset_text_field="text",
     )
 
-    # TRL >= 0.9 renamed `tokenizer` to `processing_class`
-    import trl
-    sft_kwargs: dict = dict(
+    trainer = SFTTrainer(
         model=model,
+        processing_class=tokenizer,
         train_dataset=train_ds,
         eval_dataset=eval_ds,
-        dataset_text_field="text",
-        max_seq_length=MAX_SEQ_LEN,
         args=training_args,
     )
-    trl_version = tuple(int(x) for x in trl.__version__.split(".")[:2])
-    if trl_version >= (0, 9):
-        sft_kwargs["processing_class"] = tokenizer
-    else:
-        sft_kwargs["tokenizer"] = tokenizer
-
-    trainer = SFTTrainer(**sft_kwargs)
 
     print(f"\nTraining on {len(train_ds)} examples for {args.epochs} epochs…")
     print(f"Effective batch size: {args.batch_size * GRAD_ACCUM}")

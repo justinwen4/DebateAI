@@ -174,15 +174,23 @@ def main() -> None:
         seed=42,
     )
 
-    trainer = SFTTrainer(
+    # TRL >= 0.9 renamed `tokenizer` to `processing_class`
+    import trl
+    sft_kwargs: dict = dict(
         model=model,
-        tokenizer=tokenizer,
         train_dataset=train_ds,
         eval_dataset=eval_ds,
         dataset_text_field="text",
         max_seq_length=MAX_SEQ_LEN,
         args=training_args,
     )
+    trl_version = tuple(int(x) for x in trl.__version__.split(".")[:2])
+    if trl_version >= (0, 9):
+        sft_kwargs["processing_class"] = tokenizer
+    else:
+        sft_kwargs["tokenizer"] = tokenizer
+
+    trainer = SFTTrainer(**sft_kwargs)
 
     print(f"\nTraining on {len(train_ds)} examples for {args.epochs} epochs…")
     print(f"Effective batch size: {args.batch_size * GRAD_ACCUM}")

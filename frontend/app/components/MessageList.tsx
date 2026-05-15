@@ -120,32 +120,19 @@ export default function MessageList({ messages, loading, scrollRef, onFeedback }
 
   return (
     <div ref={scrollRef} className="flex-1 overflow-y-auto">
-      <div className="max-w-3xl mx-auto px-6 py-6 space-y-4">
+      <div className="max-w-[680px] mx-auto px-6 py-5 space-y-3">
         {messages.map((m) => (
           <div key={m.id} className="message-enter">
             {m.role === "assistant" ? (
-              <div className="group rounded-xl border border-border-subtle bg-surface-elevated px-5 py-4" style={{ boxShadow: "var(--shadow-sm)" }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-accent/15 to-accent/25 flex items-center justify-center">
-                    <span className="text-accent text-[10px] font-bold">D</span>
-                  </div>
-                  <span className="text-[11px] font-medium text-muted/70">
-                    DebateAI
-                  </span>
-                </div>
-                <div className="text-[14px] leading-[1.7] text-foreground whitespace-pre-wrap">
+              <div className="group rounded-lg border border-border-subtle bg-surface-elevated px-5 py-4" style={{ boxShadow: "var(--shadow-sm)" }}>
+                <div className="text-[15px] leading-[1.75] text-foreground whitespace-pre-wrap">
                   {m.content}
                 </div>
                 <FeedbackButton messageId={m.id} onFeedback={onFeedback} />
               </div>
             ) : (
-              <div className="rounded-xl bg-surface px-5 py-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[11px] font-medium text-muted/70">
-                    You
-                  </span>
-                </div>
-                <div className="text-[14px] leading-[1.7] text-foreground whitespace-pre-wrap">
+              <div className="pl-1 py-1">
+                <div className="text-[15px] leading-[1.75] text-foreground whitespace-pre-wrap">
                   {m.content}
                 </div>
               </div>
@@ -155,13 +142,7 @@ export default function MessageList({ messages, loading, scrollRef, onFeedback }
 
         {loading && (
           <div className="message-enter">
-            <div className="rounded-xl border border-border-subtle bg-surface-elevated px-5 py-4" style={{ boxShadow: "var(--shadow-sm)" }}>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-accent/15 to-accent/25 flex items-center justify-center">
-                  <span className="text-accent text-[10px] font-bold">D</span>
-                </div>
-                <span className="text-[11px] font-medium text-muted/70">DebateAI</span>
-              </div>
+            <div className="rounded-lg border border-border-subtle bg-surface-elevated px-5 py-4" style={{ boxShadow: "var(--shadow-sm)" }}>
               <div className="flex gap-1.5 items-center py-1">
                 <span className="typing-dot w-1.5 h-1.5 rounded-full bg-muted/60" />
                 <span className="typing-dot w-1.5 h-1.5 rounded-full bg-muted/60" />

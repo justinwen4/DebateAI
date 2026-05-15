@@ -26,11 +26,13 @@ export default function ChatArea({
 }: ChatAreaProps) {
   return (
     <main className="flex-1 flex flex-col min-w-0 bg-background">
-      <header className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-border-subtle bg-background/80 backdrop-blur-md shrink-0">
-        <h2 className="text-base font-semibold text-foreground tracking-tight">
-          {messages.length > 0 ? "Conversation" : "New conversation"}
-        </h2>
-        <ThemeToggle />
+      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-md shrink-0 border-b border-border-subtle/50">
+        <div className="max-w-[680px] mx-auto px-6 py-3.5 flex items-center justify-between">
+          <h2 className="text-[15px] font-medium text-foreground tracking-tight">
+            {messages.length > 0 ? "Conversation" : "New conversation"}
+          </h2>
+          <ThemeToggle />
+        </div>
       </header>
 
       <MessageList messages={messages} loading={loading} scrollRef={scrollRef} onFeedback={onFeedback} />

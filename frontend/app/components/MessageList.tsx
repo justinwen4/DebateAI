@@ -105,7 +105,6 @@ function FeedbackButton({ messageId, onFeedback }: { messageId: string; onFeedba
         </button>
           <p className="text-[12px] leading-relaxed text-muted">
             Help us improve responses! Please rate this answer and share notes :)
-            Your feedback helps us gather better training data.
           </p>
       </div>
     </div>

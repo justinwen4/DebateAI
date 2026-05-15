@@ -15,6 +15,61 @@ interface ChatAreaProps {
   scrollRef: RefObject<HTMLDivElement | null>;
 }
 
+const STOP_WORDS = new Set([
+  "a",
+  "an",
+  "and",
+  "are",
+  "as",
+  "at",
+  "be",
+  "can",
+  "do",
+  "for",
+  "from",
+  "how",
+  "i",
+  "in",
+  "is",
+  "it",
+  "me",
+  "my",
+  "of",
+  "on",
+  "or",
+  "please",
+  "the",
+  "to",
+  "we",
+  "what",
+  "when",
+  "where",
+  "why",
+  "you",
+]);
+
+function toTitleCase(word: string) {
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
+function buildConversationTitle(content: string) {
+  const words = content
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter((word) => !STOP_WORDS.has(word));
+
+  const uniqueWords: string[] = [];
+  for (const word of words) {
+    if (!uniqueWords.includes(word)) uniqueWords.push(word);
+    if (uniqueWords.length === 3) break;
+  }
+
+  if (uniqueWords.length === 0) return "Conversation";
+  return uniqueWords.map(toTitleCase).join(" ");
+}
+
 export default function ChatArea({
   messages,
   input,
@@ -25,11 +80,7 @@ export default function ChatArea({
   scrollRef,
 }: ChatAreaProps) {
   const firstUserMsg = messages.find((m) => m.role === "user");
-  const title = firstUserMsg
-    ? firstUserMsg.content.length > 60
-      ? `${firstUserMsg.content.slice(0, 60).trimEnd()}...`
-      : firstUserMsg.content
-    : "New conversation";
+  const title = firstUserMsg ? buildConversationTitle(firstUserMsg.content) : "New conversation";
 
   return (
     <main className="flex-1 flex flex-col min-w-0 bg-background">

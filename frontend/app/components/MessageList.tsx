@@ -103,10 +103,10 @@ function FeedbackButton({ messageId, onFeedback }: { messageId: string; onFeedba
           </svg>
           Rate
         </button>
-        <p className="text-[12px] leading-relaxed text-muted">
-          Help us improve responses: please rate this answer and share notes.
-          Your feedback helps us gather better training data.
-        </p>
+          <p className="text-[12px] leading-relaxed text-muted">
+            Help us improve responses! Please rate this answer and share notes :)
+            Your feedback helps us gather better training data.
+          </p>
       </div>
     </div>
   );

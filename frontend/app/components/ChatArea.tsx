@@ -25,9 +25,9 @@ export default function ChatArea({
   scrollRef,
 }: ChatAreaProps) {
   return (
-    <main className="flex-1 flex flex-col min-w-0">
-      <header className="flex items-center justify-between px-6 py-3 border-b border-border bg-background shrink-0">
-        <h2 className="text-sm font-medium text-muted">
+    <main className="flex-1 flex flex-col min-w-0 bg-background">
+      <header className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-border-subtle bg-background/80 backdrop-blur-md shrink-0">
+        <h2 className="text-base font-semibold text-foreground tracking-tight">
           {messages.length > 0 ? "Conversation" : "New conversation"}
         </h2>
         <ThemeToggle />

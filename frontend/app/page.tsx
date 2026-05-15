@@ -23,6 +23,7 @@ export default function Home() {
       const text = input.trim();
       if (!text || loading) return;
 
+      const history = messages.map((m) => ({ role: m.role, content: m.content }));
       const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: text };
       setMessages((prev) => [...prev, userMsg]);
       setInput("");
@@ -32,7 +33,7 @@ export default function Home() {
         const res = await fetch(`${API_URL}/generate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: text }),
+          body: JSON.stringify({ prompt: text, history }),
         });
 
         if (!res.ok) throw new Error(`API error ${res.status}`);
@@ -51,7 +52,7 @@ export default function Home() {
         setLoading(false);
       }
     },
-    [input, loading],
+    [input, loading, messages],
   );
 
   const handleFeedback = useCallback(
@@ -61,11 +62,19 @@ export default function Home() {
       const assistantMsg = messages[idx];
       const userMsg = messages.slice(0, idx).reverse().find((m) => m.role === "user");
       if (!userMsg) return;
+      const firstUserMsg = messages.find((m) => m.role === "user");
+      const curationEligible = firstUserMsg?.id === userMsg.id;
 
       const res = await fetch(`${API_URL}/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: userMsg.content, output: assistantMsg.content, rating, notes }),
+        body: JSON.stringify({
+          prompt: userMsg.content,
+          output: assistantMsg.content,
+          rating,
+          notes,
+          curation_eligible: curationEligible,
+        }),
       });
       if (!res.ok) throw new Error(`Feedback error ${res.status}`);
     },

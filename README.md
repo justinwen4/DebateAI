@@ -41,12 +41,32 @@ Open `http://localhost:3000`.
 **POST /generate**
 
 ```json
-{ "prompt": "Why does fairness outweigh education?" }
+{
+  "prompt": "Why does fairness outweigh education?",
+  "history": [
+    { "role": "user", "content": "What is fairness in debate theory?" },
+    { "role": "assistant", "content": "Fairness is reciprocal ground..." }
+  ]
+}
 ```
 
 ```json
 { "output": "Fairness outweighs—it's a gateway issue..." }
 ```
+
+**POST /feedback**
+
+```json
+{
+  "prompt": "Why does fairness outweigh education?",
+  "output": "Fairness outweighs...",
+  "rating": 3,
+  "notes": "Needs a clearer mechanism in sentence two.",
+  "curation_eligible": true
+}
+```
+
+`curation_eligible` should be `true` only for feedback attached to the first user turn in a chat. This keeps follow-up prompts like "can you elaborate?" out of training curation.
 
 ## Project Structure
 

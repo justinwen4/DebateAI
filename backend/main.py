@@ -44,6 +44,7 @@ app.add_middleware(
 
 class GenerateRequest(BaseModel):
     prompt: str
+    history: list[dict[str, str]] | None = None
 
 
 class GenerateResponse(BaseModel):
@@ -53,8 +54,21 @@ class GenerateResponse(BaseModel):
 @app.post("/generate", response_model=GenerateResponse)
 async def generate(req: GenerateRequest):
     try:
-        context = retrieve(req.prompt)
-        output = generate_response(req.prompt, context=context)
+        history = req.history or []
+        valid_history = [
+            turn
+            for turn in history
+            if isinstance(turn.get("content"), str)
+            and turn.get("role") in {"user", "assistant"}
+            and turn.get("content").strip()
+        ]
+        rag_history = valid_history[-12:]
+        rag_query_parts = [turn["content"].strip() for turn in rag_history]
+        rag_query_parts.append(req.prompt)
+        rag_query = "\n".join(rag_query_parts)
+
+        context = retrieve(rag_query)
+        output = generate_response(req.prompt, context=context, history=valid_history)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Generation failed: {e}")
     return GenerateResponse(output=output)
@@ -65,17 +79,25 @@ class FeedbackRequest(BaseModel):
     output: str
     rating: int = Field(ge=1, le=5)
     notes: str = ""
+    curation_eligible: bool = False
 
 
 @app.post("/feedback")
 async def feedback(req: FeedbackRequest):
     try:
-        _get_supabase().table("feedback").insert({
+        payload = {
             "prompt": req.prompt,
             "bad_output": req.output,
             "rating": req.rating,
             "notes": req.notes,
-        }).execute()
+            "curation_eligible": req.curation_eligible,
+        }
+        try:
+            _get_supabase().table("feedback").insert(payload).execute()
+        except Exception:
+            # Backward compatibility if DB schema does not yet include the new column.
+            payload.pop("curation_eligible", None)
+            _get_supabase().table("feedback").insert(payload).execute()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save feedback: {e}")
     return {"status": "ok"}

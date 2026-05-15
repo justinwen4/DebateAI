@@ -23,6 +23,8 @@ Flags:
   --limit N       Process only first N qualifying rows (useful for previews)
   --max-score N   Only process rows with rating <= N  (default: 4)
   --min-score N   Only process rows with rating >= N  (default: 1)
+  --include-non-curation-eligible
+                  Include rows not marked curation_eligible=true (legacy/backfill mode)
   --no-dedup      Append even if the prompt already exists in the dataset
   --output PATH   Append to this file instead of ml/dataset.tutor.jsonl
   --model NAME    OpenAI model (default: gpt-4o)
@@ -74,6 +76,11 @@ def main() -> None:
     parser.add_argument("--limit", type=int, default=0, help="Max rows to process (0 = all)")
     parser.add_argument("--dry-run", action="store_true", help="Print rewrites; do not write to dataset")
     parser.add_argument("--no-dedup", action="store_true", help="Append even if prompt already exists in dataset")
+    parser.add_argument(
+        "--include-non-curation-eligible",
+        action="store_true",
+        help="Include rows where curation_eligible is false/missing (legacy/backfill mode)",
+    )
     parser.add_argument("--sleep", type=float, default=0.2)
     args = parser.parse_args()
 
@@ -89,16 +96,28 @@ def main() -> None:
 
     # Fetch all feedback rows
     print("Fetching feedback rows from Supabase…")
-    resp = (
+    query = (
         sb.table("feedback")
         .select("*")
         .gte("rating", args.min_score)
         .lte("rating", args.max_score)
         .order("rating", desc=False)   # worst first so the most impactful rewrites run first
-        .execute()
     )
+    if not args.include_non_curation_eligible:
+        query = query.eq("curation_eligible", True)
+    try:
+        resp = query.execute()
+    except Exception as e:
+        if not args.include_non_curation_eligible and "curation_eligible" in str(e).lower():
+            raise SystemExit(
+                "Supabase feedback table is missing 'curation_eligible'. "
+                "Run the migration first (see backend/supabase/migrations), or "
+                "use --include-non-curation-eligible for temporary legacy backfill."
+            )
+        raise
     rows = resp.data or []
-    print(f"  {len(rows)} rows match rating {args.min_score}–{args.max_score}")
+    scope = "and curation_eligible=true" if not args.include_non_curation_eligible else "(including non-curation-eligible)"
+    print(f"  {len(rows)} rows match rating {args.min_score}–{args.max_score} {scope}")
 
     if not rows:
         print("Nothing to do.")
@@ -112,6 +131,8 @@ def main() -> None:
 
     qualifying = []
     for row in rows:
+        if not args.include_non_curation_eligible and not row.get("curation_eligible", False):
+            continue
         prompt = (row.get("prompt") or "").strip()
         if not prompt:
             continue

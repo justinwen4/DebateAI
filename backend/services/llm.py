@@ -3,6 +3,7 @@ import os
 from openai import OpenAI
 
 client: OpenAI | None = None
+MAX_HISTORY_TURNS = 12
 
 SYSTEM_PROMPT = """
 You are a sharp debate coach / tutor. The student already knows basic debate terms (1AC, K, condo, framework, perm, link, alt, 2NR, 1AR, etc.) — do NOT define them.
@@ -41,7 +42,27 @@ def _get_client() -> OpenAI:
     return client
 
 
-def generate_response(prompt: str, context: str = "") -> str:
+def _sanitize_history(history: list[dict[str, str]] | None) -> list[dict[str, str]]:
+    if not history:
+        return []
+
+    sanitized: list[dict[str, str]] = []
+    for turn in history:
+        role = turn.get("role")
+        content = turn.get("content")
+        if role not in {"user", "assistant"}:
+            continue
+        if not isinstance(content, str):
+            continue
+        content = content.strip()
+        if not content:
+            continue
+        sanitized.append({"role": role, "content": content})
+
+    return sanitized[-MAX_HISTORY_TURNS:]
+
+
+def generate_response(prompt: str, context: str = "", history: list[dict[str, str]] | None = None) -> str:
     """Generate a tutor-style response for the given debate question."""
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
@@ -49,6 +70,7 @@ def generate_response(prompt: str, context: str = "") -> str:
         ctx = "Reference examples (domain snippets — match substance, not performative tone):\n\n" + context
         messages.append({"role": "system", "content": ctx})
 
+    messages.extend(_sanitize_history(history))
     messages.append({"role": "user", "content": prompt})
 
     response = _get_client().chat.completions.create(

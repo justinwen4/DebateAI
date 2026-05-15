@@ -15,5 +15,8 @@ backend/chroma_db/
 node_modules/
 .next/
 
+# LoRA adapter weights (large binary files — stored in Google Drive / HuggingFace)
+ml/output/
+
 # OS
 .DS_Store

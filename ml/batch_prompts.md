@@ -39,14 +39,12 @@ You are helping me build a training dataset for a debate tutoring AI. I need you
 - Uniqueness — what it means and why it matters
 - How to answer non-unique
 - Link — what a link is and what makes it strong vs. weak
-- How to answer a link (link turn, no link, link non-unique)
+- How to answer a link (link turn, no link, no link uniqueness)
 - Brink — what it is and how to use it
-- Internal link — how uniqueness connects to the impact
 - Impact — magnitude, probability, timeframe in the DA context
 - Linear vs. threshold disads — the difference and how to argue each
 - Politics DA — how it works and common answers
 - Turns case — why the DA turns the aff's internal links
-- Disad outweighs case — how to make the calculus argument
 - Impact turn — what it is and why it's risky
 - Double turn — why it's a concession
 - Timeframe framing on DAs — why short-term impacts can outweigh

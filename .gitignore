@@ -17,6 +17,7 @@ node_modules/
 
 # LoRA adapter weights (large binary files — stored in Google Drive / HuggingFace)
 ml/output/
+ml/dataset.tutor.jsonl
 
 # OS
 .DS_Store

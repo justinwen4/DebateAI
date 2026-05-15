@@ -91,15 +91,24 @@ function FeedbackButton({ messageId, onFeedback }: { messageId: string; onFeedba
   }
 
   return (
-    <button
-      onClick={() => setState("open")}
-      className="mt-2 p-1 rounded-md text-muted/40 hover:text-muted hover:bg-surface-hover transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
-      title="Rate this response"
-    >
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-      </svg>
-    </button>
+    <div className="mt-3 rounded-lg border border-border-subtle bg-surface px-3 py-2.5">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-[12px] leading-relaxed text-muted">
+          Help us improve responses: please rate this answer and share optional notes.
+          Your feedback helps us gather better training data.
+        </p>
+        <button
+          onClick={() => setState("open")}
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-accent/25 bg-accent/10 px-2.5 py-1.5 text-xs font-medium text-accent hover:bg-accent/20 transition-colors cursor-pointer"
+          title="Rate this response"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+          Rate
+        </button>
+      </div>
+    </div>
   );
 }
 

@@ -91,8 +91,8 @@ function FeedbackButton({ messageId, onFeedback }: { messageId: string; onFeedba
   }
 
   return (
-    <div className="mt-3 rounded-lg border border-border-subtle bg-surface px-3 py-2.5">
-      <div className="flex items-start gap-3">
+    <div className="mt-2.5 rounded-md border border-border-subtle bg-surface px-2.5 py-2">
+      <div className="flex items-center gap-2.5">
         <button
           onClick={() => setState("open")}
           className="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-accent/25 bg-accent/10 px-2.5 py-1.5 text-xs font-medium text-accent hover:bg-accent/20 transition-colors cursor-pointer"
@@ -103,7 +103,7 @@ function FeedbackButton({ messageId, onFeedback }: { messageId: string; onFeedba
           </svg>
           Rate
         </button>
-          <p className="text-[12px] leading-relaxed text-muted">
+        <p className="text-[12px] leading-tight text-muted">
             Help us improve responses! Please rate this answer and share notes :)
           </p>
       </div>

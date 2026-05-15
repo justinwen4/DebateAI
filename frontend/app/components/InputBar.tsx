@@ -31,7 +31,7 @@ export default function InputBar({ input, setInput, onSend, loading }: InputBarP
     <div className="shrink-0 px-6 pb-4 pt-2 bg-background">
       <form
         onSubmit={onSend}
-        className="max-w-[680px] mx-auto relative rounded-2xl border border-border-subtle bg-surface focus-within:border-border transition-all"
+        className="max-w-[800px] mx-auto relative rounded-2xl border border-border-subtle bg-surface focus-within:border-border transition-all"
         style={{ boxShadow: "var(--shadow-md)" }}
       >
         <textarea

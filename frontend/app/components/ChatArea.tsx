@@ -24,12 +24,19 @@ export default function ChatArea({
   loading,
   scrollRef,
 }: ChatAreaProps) {
+  const firstUserMsg = messages.find((m) => m.role === "user");
+  const title = firstUserMsg
+    ? firstUserMsg.content.length > 60
+      ? `${firstUserMsg.content.slice(0, 60).trimEnd()}...`
+      : firstUserMsg.content
+    : "New conversation";
+
   return (
     <main className="flex-1 flex flex-col min-w-0 bg-background">
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-md shrink-0 border-b border-border-subtle/50">
-        <div className="max-w-[680px] mx-auto px-6 py-3.5 flex items-center justify-between">
-          <h2 className="text-[15px] font-medium text-foreground tracking-tight">
-            {messages.length > 0 ? "Conversation" : "New conversation"}
+        <div className="px-6 py-3.5 flex items-center justify-between">
+          <h2 className="text-[15px] font-medium text-foreground tracking-tight truncate pr-4">
+            {title}
           </h2>
           <ThemeToggle />
         </div>

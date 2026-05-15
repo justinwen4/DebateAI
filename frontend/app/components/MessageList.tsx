@@ -120,19 +120,19 @@ export default function MessageList({ messages, loading, scrollRef, onFeedback }
 
   return (
     <div ref={scrollRef} className="flex-1 overflow-y-auto">
-      <div className="max-w-[680px] mx-auto px-6 py-5 space-y-3">
+      <div className="max-w-[800px] mx-auto px-6 py-5 space-y-3">
         {messages.map((m) => (
           <div key={m.id} className="message-enter">
             {m.role === "assistant" ? (
               <div className="group rounded-lg border border-border-subtle bg-surface-elevated px-5 py-4" style={{ boxShadow: "var(--shadow-sm)" }}>
-                <div className="text-[15px] leading-[1.75] text-foreground whitespace-pre-wrap">
+                <div className="text-[14px] leading-[1.75] text-foreground whitespace-pre-wrap">
                   {m.content}
                 </div>
                 <FeedbackButton messageId={m.id} onFeedback={onFeedback} />
               </div>
             ) : (
               <div className="pl-1 py-1">
-                <div className="text-[15px] leading-[1.75] text-foreground whitespace-pre-wrap">
+                <div className="text-[14px] leading-[1.75] text-foreground whitespace-pre-wrap">
                   {m.content}
                 </div>
               </div>

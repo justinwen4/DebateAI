@@ -1,24 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useReducer } from "react";
 
 export default function ThemeToggle() {
-  const [dark, setDark] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    setDark(document.documentElement.classList.contains("dark"));
-  }, []);
+  const [, forceRender] = useReducer((count: number) => count + 1, 0);
+  const dark = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
 
   const toggle = useCallback(() => {
     const next = !dark;
-    setDark(next);
     document.documentElement.classList.toggle("dark", next);
     localStorage.setItem("theme", next ? "dark" : "light");
+    forceRender();
   }, [dark]);
-
-  if (!mounted) return <div className="w-9 h-9" aria-hidden />;
 
   return (
     <button

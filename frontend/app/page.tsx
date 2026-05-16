@@ -33,14 +33,13 @@ export default function LandingPage() {
       <section className="mx-auto grid w-full max-w-6xl gap-10 px-6 py-14 md:grid-cols-[1.2fr_1fr] md:py-20">
         <div className="space-y-6">
           <p className="inline-flex items-center rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-muted">
-            Built for modern debate workflows
+            Your AI tutor for debate
           </p>
           <h1 className="max-w-xl text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-            Debate research, prep, and iteration in one focused workspace.
+            Learn debate terminology and sharpen your thinking.
           </h1>
           <p className="max-w-xl text-base leading-relaxed text-muted">
-            Draft sharper arguments, pressure-test case positions, and get structured feedback without breaking
-            your flow.
+            Ask questions, explore arguments, and build a deeper understanding of dense debate concepts.
           </p>
           <div className="flex flex-wrap gap-3">
             <Link
@@ -59,16 +58,16 @@ export default function LandingPage() {
         </div>
 
         <div className="rounded-2xl border border-border bg-surface p-6 shadow-[var(--shadow-md)]">
-          <h2 className="text-base font-semibold text-foreground">Why teams use DebateAI</h2>
+          <h2 className="text-base font-semibold text-foreground">What you can do with DebateAI</h2>
           <ul className="mt-5 space-y-4 text-sm text-muted">
             <li className="rounded-xl border border-border-subtle bg-background px-4 py-3">
-              Generate counterpositions and argument trees from any prompt.
+              Ask about debate concepts, theory, and strategy.
             </li>
             <li className="rounded-xl border border-border-subtle bg-background px-4 py-3">
-              Capture feedback loops to improve response quality over time.
+              Explore counterarguments to stress-test positions.
             </li>
             <li className="rounded-xl border border-border-subtle bg-background px-4 py-3">
-              Keep your conversations organized in a clean, low-friction interface.
+              Keep your conversations organized in a clean interface.
             </li>
           </ul>
         </div>

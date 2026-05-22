@@ -28,23 +28,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let isMounted = true;
 
-    // #region agent log
-    const _dbgLog = (msg: string, data: Record<string, unknown>, hyp: string) => {
-      fetch('http://127.0.0.1:7865/ingest/4dca6392-8500-4895-a165-38aa24b3ec02',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'228a68'},body:JSON.stringify({sessionId:'228a68',location:'AuthContext.tsx',message:msg,data,hypothesisId:hyp,timestamp:Date.now()})}).catch(()=>{});
-    };
-    const _dbgUrl = typeof window !== 'undefined' ? { href: window.location.href, hash: window.location.hash, search: window.location.search } : {};
-    _dbgLog('AuthContext mount - URL state', _dbgUrl, 'A,B,C,D');
-    // #endregion
-
     const loadSession = async () => {
       try {
         const {
           data: { session },
         } = await supabase.auth.getSession();
-
-        // #region agent log
-        _dbgLog('loadSession result', { hasSession: Boolean(session), userId: session?.user?.id ?? null, userEmail: session?.user?.email ?? null, confirmed: session?.user?.email_confirmed_at ?? null }, 'A,B');
-        // #endregion
 
         if (isMounted) {
           const nextUser = session?.user ?? null;
@@ -63,9 +51,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      // #region agent log
-      _dbgLog('onAuthStateChange fired', { event: _event, hasSession: Boolean(session), userId: session?.user?.id ?? null, userEmail: session?.user?.email ?? null, confirmed: session?.user?.email_confirmed_at ?? null }, 'A,B,C,D');
-      // #endregion
       if (!isMounted) return;
       const nextUser = session?.user ?? null;
       setUser(nextUser);

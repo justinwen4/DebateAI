@@ -12,7 +12,7 @@ from llm_utils import anthropic_message, chat_completion
 REWRITE_SYSTEM = """\
 You are a sharp debate coach rewriting a tutor chatbot's response to a student's debate question.
 The student already knows basic debate terms (1AC, K, condo, framework, perm, link, alt, 2NR, 1AR, etc.) — do NOT define them.
-The original response was rated poorly by a human reviewer who left specific feedback notes.
+The original response was graded by a human reviewer who left specific feedback notes.
 Your job: produce an improved answer that addresses the reviewer's critique and matches the tutor register below.
 
 ANSWER FORMAT:
@@ -24,7 +24,7 @@ ANSWER FORMAT:
 STYLE:
 - Use debate shorthand naturally (K, 1AR, 2NR, condo, perm, framework, link, alt).
 - No filler ("it is important to note," "ultimately," "this highlights," "in other words").
-- Never use hollow intensifiers ("actually," "immediately," "fundamentally," "real and lasting"). Never use agent-bloat framing ("The framework therefore argues we should X") — collapse it to the action ("X").
+- Never use hollow intensifiers ("actually," "entirely," "immediately," "fundamentally," "real and lasting" "in the first place" "either way"). Never use agent-bloat framing ("The framework therefore argues we should X") — collapse it to the action ("X").
 - Say "read" not "run" for presenting arguments ("read the K," "read framework," not "run the K"). "Framework" in K rounds refers to the evaluative meta-level debate, not a generic strategic block — be precise.
 - Every claim must have a MECHANISM or warrant, not just a label.
 - Each sentence should advance the argument. Prefer one linked warrant chain over parallel mini-essays on separate topics.
@@ -48,37 +48,6 @@ Q: Why are PICs good?
 A: PICs are good for three reasons. First, logic and clash: PICs show a part of the plan is flawed and should be excluded. Arbitrarily excluding legitimate neg is unpredictable and a slippery slope to excluding all counterplans. Second, neg flex: the aff chooses the plan and gets first and last speech, which is also terminal defense because we can only negate what the aff chooses to defend. Third, real world education: PICs mirror real-world policymaking, where bills are often amended, fostering better clash and understanding which is the only portable impact.\
 """
 
-TAG_SYSTEM = """\
-You are a debate coach tagging a student's question for a tutoring dataset.
-
-Given a raw question, produce a bracketed prefix in this exact format:
-  [Part1 · Part2] question text?
-or
-  [Part1 · Part2 · Part3] question text?
-
-Tag rules:
-- Part1: Aff, Neg, or General (pick based on who is asking or who the argument belongs to;
-  default to General if unclear).
-- Part2: SPECIFIC debate lane / argument name (e.g. "condo", "T-FX", "process CPs",
-  "reps K", "1AR voting issues", "impact calculus", "perm theory"). Prefer the actual
-  argument name from the question over a vague category.
-- Part3: optional speech/role (e.g. 2NR, 1AR, CX). Omit if unclear.
-
-Preserve the original question text exactly after the bracket prefix; just prepend the tag.
-
-EXAMPLES:
-  Input:  Why shouldn't we evaluate the plan text in a vacuum?
-  Output: [General · T · plan text in a vacuum] Why shouldn't we evaluate the plan text in a vacuum?
-
-  Input:  Why are PICs good?
-  Output: [Neg · PICs good · 2NR] Why are PICs good?
-
-  Input:  How should I structure my 1AR to the kritik?
-  Output: [Aff · Kritik · 1AR] How should I structure my 1AR to the kritik?
-
-Return ONLY the tagged question — no explanation, no JSON, no quotes.\
-"""
-
 
 def _rewrite_user_msg(question: str, bad_output: str, notes: str) -> str:
     return (
@@ -98,8 +67,8 @@ def rewrite(client, model: str, question: str, bad_output: str, notes: str, *, p
             model=model,
             system=REWRITE_SYSTEM,
             user=user_msg,
-            temperature=0.3,
-            max_tokens=350,
+        temperature=0.2,
+        max_tokens=350,
         )
     r = chat_completion(
         client,
@@ -108,35 +77,7 @@ def rewrite(client, model: str, question: str, bad_output: str, notes: str, *, p
             {"role": "system", "content": REWRITE_SYSTEM},
             {"role": "user", "content": user_msg},
         ],
-        temperature=0.3,
+        temperature=0.2,
         max_tokens=350,
     )
     return (r.choices[0].message.content or "").strip()
-
-
-def add_tags(client, model: str, question: str, *, provider: str = "openai") -> str:
-    """Add bracket-style debate tags to a raw question."""
-    if provider == "anthropic":
-        result = anthropic_message(
-            client,
-            model=model,
-            system=TAG_SYSTEM,
-            user=question.strip(),
-            temperature=0.1,
-            max_tokens=120,
-        )
-    else:
-        r = chat_completion(
-            client,
-            model=model,
-            messages=[
-                {"role": "system", "content": TAG_SYSTEM},
-                {"role": "user", "content": question.strip()},
-            ],
-            temperature=0.1,
-            max_tokens=120,
-        )
-        result = (r.choices[0].message.content or "").strip()
-    if not result.startswith("["):
-        return question.strip()
-    return result

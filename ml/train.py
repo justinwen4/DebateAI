@@ -6,10 +6,7 @@ SETUP (run once in Colab or a GPU environment):
     pip install "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git"
     pip install --no-deps "xformers<0.0.27" "trl<0.9.0" peft accelerate bitsandbytes
 
-PREPARE DATA (run from repo root first):
-    python ml/prepare_finetune.py
-
-TRAIN (from repo root, needs GPU):
+TRAIN (from repo root, needs GPU; requires ml/data/train.jsonl and ml/data/eval.jsonl):
     python ml/train.py
     python ml/train.py --epochs 3 --lora-rank 16 --output-dir ml/output/debate-lora
 
@@ -20,7 +17,7 @@ Colab quickstart:
     1. Open a new Colab notebook, select T4 GPU runtime
     2. Clone repo: !git clone https://github.com/YOUR_USERNAME/debate-chatbot && cd debate-chatbot
     3. Install deps (cell above)
-    4. Run: !python ml/prepare_finetune.py && python ml/train.py
+    4. Ensure ml/data/train.jsonl and ml/data/eval.jsonl exist, then run: !python ml/train.py
 """
 
 from __future__ import annotations
@@ -94,7 +91,7 @@ def main() -> None:
     for p in [args.train_data, args.eval_data]:
         if not Path(p).exists():
             raise SystemExit(
-                f"Missing {p}. Run first:\n  python ml/prepare_finetune.py"
+                f"Missing {p}. Create train/eval JSONL files under ml/data/ before training."
             )
 
     # ---------------------------------------------------------------------------
@@ -200,8 +197,7 @@ def main() -> None:
         tokenizer.push_to_hub(args.push_to_hub, token=os.environ.get("HF_TOKEN"))
         print(f"Done. https://huggingface.co/{args.push_to_hub}")
 
-    print("\nNext step: run eval_finetune.py to benchmark vs GPT-4o baseline.")
-    print(f"  python ml/eval_finetune.py --adapter {output_dir}")
+    print(f"\nTraining complete. Adapter saved to {output_dir}/")
 
 
 if __name__ == "__main__":

@@ -35,7 +35,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from llm_utils import chat_completion
-from prompts import rewrite, add_tags
+from prompts import rewrite
 
 
 # ---------------------------------------------------------------------------
@@ -267,13 +267,8 @@ def _interactive_review(
             print("  Rewriting…")
             new_output = rewrite(client, model, question, answer, feedback)
 
-            # Re-tag if needed (input already has tags from generator)
-            tagged_input = question
-            if not tagged_input.startswith("["):
-                tagged_input = add_tags(client, model, question)
-
             entry = {
-                "input": tagged_input,
+                "input": question,
                 "output": new_output,
                 "category": category,
                 "mode": "normal",

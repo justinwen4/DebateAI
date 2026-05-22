@@ -19,5 +19,11 @@ node_modules/
 ml/output/
 ml/dataset.tutor.jsonl
 
+# ML pipeline generated artifacts
+ml/data/train.jsonl
+ml/data/eval.jsonl
+ml/data/eval_raw.jsonl
+ml/audit_report.csv
+
 # OS
 .DS_Store

@@ -62,7 +62,7 @@ async def generate(req: GenerateRequest):
             and turn.get("role") in {"user", "assistant"}
             and turn.get("content").strip()
         ]
-        rag_history = valid_history[-12:]
+        rag_history = valid_history[-8:]
         rag_query_parts = [turn["content"].strip() for turn in rag_history]
         rag_query_parts.append(req.prompt)
         rag_query = "\n".join(rag_query_parts)

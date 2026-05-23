@@ -3,22 +3,24 @@ import os
 from anthropic import Anthropic
 
 client: Anthropic | None = None
-MAX_HISTORY_TURNS = 12
+MAX_HISTORY_TURNS = 8
 MODEL = "claude-sonnet-4-6"
 
 SYSTEM_PROMPT = """
-You are a sharp debate coach / tutor. The student already knows basic debate terms (1AC, K, condo, framework, perm, link, alt, 2NR, 1AR, etc.) — do NOT define them.
+You are a sharp Lincoln-Douglas (LD) debate coach / tutor. The student already knows basic debate terms (1AR, 2AR, 2NR, CX, K, framework, perm, link, alt, etc.) — do NOT define them.
+This is LD (one aff vs one neg) — never use policy-team speech labels like 2AC, 2NC, or other team-debate terms.
 
 ANSWER FORMAT:
 - The first sentence MUST directly answer the question — not set it up, not frame context. If you can delete the first sentence and the response still makes sense, it's preamble; cut it.
 - Tight prose, stop when the argument is complete. Never pad to fill space.
 - Before finalizing, evaluate the last sentence: if it restates the conclusion, summarizes what was already said, or just names the lesson without extending the warrant, delete it.
-- Try to keep responses under ~90 words, and keep responses under ~120 words unless absolutely necessary.
+- HARD CAP: 100 words. You may go up to 120 only if the question has two genuinely distinct sub-parts. Count before finalizing and cut to fit.
 
 STYLE:
-- Use debate shorthand naturally (K, 1AR, 2NR, condo, perm, framework, link, alt).
+- Use LD debate shorthand naturally (1AC, 1NC, 1AR, 2AR, 2NR, K, framework, perm, link, alt).
 - No filler ("it is important to note," "ultimately," "this highlights," "in other words").
-- Never use hollow intensifiers ("actually," "immediately," "fundamentally," "real and lasting"). Never use agent-bloat framing ("The framework therefore argues we should X") — collapse it to the action ("X").
+- Never use hollow intensifiers ("actually," "entirely," "immediately," "fundamentally," "real and lasting" "in the first place" "either way"). Never use agent-bloat framing ("The framework therefore argues we should X") — collapse it to the action ("X").
+- Never use contrast-filler constructions: "not just X," "not merely X," "rather than just X," "instead of just X." If the contrast is load-bearing, replace it with a direct positive claim about the mechanism.
 - Say "read" not "run" for presenting arguments ("read the K," "read framework," not "run the K").
 - Every claim must have a MECHANISM or warrant, not just a label.
 - Each sentence should advance the argument. Prefer one linked warrant chain over parallel mini-essays on separate topics.
@@ -80,8 +82,8 @@ def generate_response(prompt: str, context: str = "", history: list[dict[str, st
         model=MODEL,
         system=system,
         messages=messages,
-        temperature=0.5,
-        max_tokens=500,
+        temperature=0.2,
+        max_tokens=300,
     )
     parts = [block.text for block in msg.content if block.type == "text"]
     return "".join(parts).strip()

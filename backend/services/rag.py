@@ -1,9 +1,12 @@
 import hashlib
 import json
+import logging
 import os
 from pathlib import Path
 
 import chromadb
+
+logger = logging.getLogger(__name__)
 
 COLLECTION_NAME = "debate_analytics"
 DB_DIR = os.path.join(os.path.dirname(__file__), "..", "chroma_db")
@@ -116,8 +119,8 @@ def retrieve(query: str, n_results: int = 3, distance_threshold: float = 0.4) ->
     pairs = []
     for m, d in zip(metas, distances):
         status = "✓" if d <= distance_threshold else "✗"
-        print(f"[rag] {status} dist={d:.3f} | {m['input'][:80]}")
+        logger.info("[rag] %s dist=%.3f | %s", status, d, m['input'][:80])
         if d <= distance_threshold:
             pairs.append(f"Q: {m['input']}\nA: {m['output']}")
-    print(f"[rag] {len(pairs)}/{len(metas)} results passed threshold {distance_threshold}")
+    logger.info("[rag] %d/%d results passed threshold %.2f", len(pairs), len(metas), distance_threshold)
     return "\n\n---\n\n".join(pairs)

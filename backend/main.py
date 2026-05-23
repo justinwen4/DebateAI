@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import sys
@@ -33,10 +34,13 @@ def _get_supabase() -> Client:
     return _supabase
 
 
+logger = logging.getLogger(__name__)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    count = seed_from_dataset()
-    print(f"[rag] {count} documents in vector store")
+    count = await asyncio.to_thread(seed_from_dataset)
+    logger.info("[rag] %d documents in vector store", count)
     yield
 
 
@@ -75,8 +79,8 @@ async def generate(req: GenerateRequest):
         rag_query_parts.append(req.prompt)
         rag_query = "\n".join(rag_query_parts)
 
-        context = retrieve(rag_query)
-        output = generate_response(req.prompt, context=context, history=valid_history)
+        context = await retrieve(rag_query)
+        output = await generate_response(req.prompt, context=context, history=valid_history)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Generation failed: {e}")
     return GenerateResponse(output=output)

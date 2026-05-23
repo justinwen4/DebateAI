@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 from anthropic import Anthropic
@@ -66,7 +67,9 @@ def _sanitize_history(history: list[dict[str, str]] | None) -> list[dict[str, st
     return sanitized[-MAX_HISTORY_TURNS:]
 
 
-def generate_response(prompt: str, context: str = "", history: list[dict[str, str]] | None = None) -> str:
+def _generate_response_sync(
+    prompt: str, context: str = "", history: list[dict[str, str]] | None = None
+) -> str:
     """Generate a tutor-style response for the given debate question."""
     system = SYSTEM_PROMPT
     if context:
@@ -87,3 +90,10 @@ def generate_response(prompt: str, context: str = "", history: list[dict[str, st
     )
     parts = [block.text for block in msg.content if block.type == "text"]
     return "".join(parts).strip()
+
+
+async def generate_response(
+    prompt: str, context: str = "", history: list[dict[str, str]] | None = None
+) -> str:
+    """Generate a tutor-style response (non-blocking)."""
+    return await asyncio.to_thread(_generate_response_sync, prompt, context, history)

@@ -1,12 +1,15 @@
+import asyncio
 import hashlib
 import json
 import logging
 import os
+import threading
 from pathlib import Path
 
 import chromadb
 
 logger = logging.getLogger(__name__)
+_reseed_lock = threading.Lock()
 
 COLLECTION_NAME = "debate_analytics"
 DB_DIR = os.path.join(os.path.dirname(__file__), "..", "chroma_db")
@@ -52,8 +55,8 @@ def _save_hash(path: Path) -> None:
     Path(HASH_FILE).write_text(_file_hash(path))
 
 
-def seed_from_dataset() -> int:
-    """Load dataset.tutor.jsonl into Chroma, reseeding if the file changed."""
+def _seed_from_dataset_unlocked() -> int:
+    """Load dataset.tutor.jsonl into Chroma. Caller must hold _reseed_lock."""
     path = Path(DATASET_PATH)
     if not path.exists():
         return 0
@@ -84,6 +87,12 @@ def seed_from_dataset() -> int:
     return len(ids)
 
 
+def seed_from_dataset() -> int:
+    """Load dataset.tutor.jsonl into Chroma, reseeding if the file changed."""
+    with _reseed_lock:
+        return _seed_from_dataset_unlocked()
+
+
 def _reseed_if_changed() -> None:
     """Reseed Chroma if dataset.tutor.jsonl has been modified since last check."""
     global _last_mtime
@@ -91,12 +100,16 @@ def _reseed_if_changed() -> None:
     if not path.exists():
         return
     mtime = path.stat().st_mtime
-    if mtime != _last_mtime:
-        seed_from_dataset()
-        _last_mtime = path.stat().st_mtime
+    if mtime == _last_mtime:
+        return
+    with _reseed_lock:
+        mtime = path.stat().st_mtime
+        if mtime != _last_mtime:
+            _seed_from_dataset_unlocked()
+            _last_mtime = path.stat().st_mtime
 
 
-def retrieve(query: str, n_results: int = 3, distance_threshold: float = 0.4) -> str:
+def _retrieve_sync(query: str, n_results: int = 3, distance_threshold: float = 0.4) -> str:
     """Return top-k debate analytics relevant to the query.
 
     Results whose cosine distance exceeds distance_threshold are dropped, so
@@ -124,3 +137,8 @@ def retrieve(query: str, n_results: int = 3, distance_threshold: float = 0.4) ->
             pairs.append(f"Q: {m['input']}\nA: {m['output']}")
     logger.info("[rag] %d/%d results passed threshold %.2f", len(pairs), len(metas), distance_threshold)
     return "\n\n---\n\n".join(pairs)
+
+
+async def retrieve(query: str, n_results: int = 3, distance_threshold: float = 0.4) -> str:
+    """Return top-k debate analytics relevant to the query (non-blocking)."""
+    return await asyncio.to_thread(_retrieve_sync, query, n_results, distance_threshold)

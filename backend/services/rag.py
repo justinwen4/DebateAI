@@ -72,7 +72,7 @@ def seed_from_dataset() -> int:
         row = json.loads(line)
         ids.append(f"doc_{i}")
         documents.append(row["input"])
-        metadatas.append({"output": row["output"]})
+        metadatas.append({"input": row["input"], "output": row["output"]})
 
     if ids:
         col.add(ids=ids, documents=documents, metadatas=metadatas)
@@ -93,8 +93,12 @@ def _reseed_if_changed() -> None:
         _last_mtime = path.stat().st_mtime
 
 
-def retrieve(query: str, n_results: int = 3) -> str:
-    """Return top-k debate analytics relevant to the query."""
+def retrieve(query: str, n_results: int = 3, distance_threshold: float = 0.4) -> str:
+    """Return top-k debate analytics relevant to the query.
+
+    Results whose cosine distance exceeds distance_threshold are dropped, so
+    the number of returned examples may be fewer than n_results (including zero).
+    """
     _reseed_if_changed()
     col = _get_collection()
     if col.count() == 0:
@@ -103,10 +107,17 @@ def retrieve(query: str, n_results: int = 3) -> str:
     results = col.query(
         query_texts=[query],
         n_results=min(n_results, col.count()),
-        include=["metadatas"],
+        include=["metadatas", "distances"],
     )
     metas = results.get("metadatas", [[]])[0]
+    distances = results.get("distances", [[]])[0]
     if not metas:
         return ""
-    outputs = [m["output"] for m in metas]
-    return "\n\n---\n\n".join(outputs)
+    pairs = []
+    for m, d in zip(metas, distances):
+        status = "✓" if d <= distance_threshold else "✗"
+        print(f"[rag] {status} dist={d:.3f} | {m['input'][:80]}")
+        if d <= distance_threshold:
+            pairs.append(f"Q: {m['input']}\nA: {m['output']}")
+    print(f"[rag] {len(pairs)}/{len(metas)} results passed threshold {distance_threshold}")
+    return "\n\n---\n\n".join(pairs)

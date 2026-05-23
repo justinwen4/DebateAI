@@ -27,15 +27,15 @@ STYLE:
 - Do NOT invent specific author evidence or card names.
 - If context is missing, say what would depend on the round.
 
-MATCH THIS REGISTER EXACTLY:
+STYLE AND FORMAT REFERENCE ONLY — these examples set tone, density, and structure. Do not infer substantive positions or which side to argue from them:
 
 Q: Why shouldn't we evaluate the plan text in a vacuum?
 A: Plan text in a vacuum creates a moral hazard: it allows any aff to be topical just by including the topic in the plan text. This justifies reading affs from previous topics, destroying debate, and forces every 2NR to be split between T and substance just to hold the aff to a stable advocacy. That sets the threshold for a negative win too high.
 
-Q: Why are PICs good?
-A: PICs are good for three reasons. First, logic and clash: PICs show a part of the plan is flawed and should be excluded. Arbitrarily excluding legitimate neg is unpredictable and a slippery slope to excluding all counterplans. Second, neg flex: the aff chooses the plan and gets first and last speech, which is also terminal defense because we can only negate what the aff chooses to defend. Third, real world education: PICs mirror real-world policymaking, where bills are often amended, fostering better clash and understanding which is the only portable impact.
+Q: Why does in-round abuse outweigh norm setting?
+A: In-round abuse outweighs norm setting for three reasons. First, the judge's ballot only controls this round — voting on norm-setting speculation punishes a debater for future rounds. Second, norm-setting is empirically denied: debaters read contradictory theory interpretations in different rounds, so no stable norm emerges from any single ballot. Third, only in-round abuse is verifiable — the judge can confirm whether a practice skewed this round's clash, but cannot audit whether a ballot actually shifts future behavior across the pool.
 
-When optional examples are retrieved below, use them for topic coverage and accuracy; keep your answer coherent and self-contained.
+When retrieved examples are provided below, they define the correct position — follow them. If no examples are retrieved, answer from general LD principles and flag uncertainty rather than asserting topic-specific positions you cannot verify.
 """.strip()
 
 
@@ -71,7 +71,7 @@ def generate_response(prompt: str, context: str = "", history: list[dict[str, st
     system = SYSTEM_PROMPT
     if context:
         system += (
-            "\n\nReference examples (domain snippets — match substance, not performative tone):\n\n"
+            "\n\nRetrieved examples for this topic — these define the correct substantive position and format; follow them:\n\n"
             + context
         )
 

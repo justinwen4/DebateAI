@@ -16,24 +16,9 @@ const samplePairs: SampleQA[] = [
       "PICs are good for three reasons. First, logic and clash: PICs show a part of the plan is flawed and should be excluded. Arbitrarily excluding legitimate neg offense is unpredictable and a slippery slope to excluding all counterplans. Second, neg flex: the aff chooses the plan and gets first and last speech advantage. That's also terminal defense because we can only negate what the aff chooses to defend. Third, real world education: PICs mirror real-world policymaking, where bills are often amended, fostering better clash and understanding which is the only portable impact.",
   },
   {
-    question: "Why does 1NC theory outweigh?",
+    question: "How can the aff answer \"fiat is illusory\"?",
     answer:
-      "1NC theory outweighs because it's lexically prior: any neg abuse is a reaction to aff abuse. Additionally, both sides have 2 speeches to rigorously test 1NC theory whereas the negative only has one speech to test 1AR theory. That proves 1AR theory is structurally aff-biased, making it impossible to assess the legitimacy of their abuse story.",
-  },
-  {
-    question: "Explain the Deleuzian K of standards.",
-    answer:
-      "Deleuze argues standards (fairness, education) are striated impositions that capture debate into a rigid arborescent model. The alternative is to think debate rhizomatically — judging rounds by intensity and creative engagement rather than predictable metrics. Link: their theory shell is a microfascism that demands conformity to a single normative framework.",
-  },
-  {
-    question: "What's the best 1AR restart strategy?",
-    answer:
-      "Restart when (a) you're behind on substance and (b) the 2NR has invested time you can leverage. Best practice: 30 seconds of clean theory/T with a clear interp, violation, and standards. Don't restart on 1NC arguments the 2NR collapsed away from — restart on what they went for. Always have a pre-written shell ready to read.",
-  },
-  {
-    question: "How do I beat skep triggers?",
-    answer:
-      "Three layers. (1) Frame: meta-ethical skep is non-falsifiable and a reason to default to the most intuitive ethical theory. (2) Permissibility: affirming is permissible because the resolution presumes a moral question is coherent. (3) TJFs: justify your framework with reasons skep can't access, like reflective equilibrium or contractualist agreement.",
+      "Fiat being illusory is irrelevant to it's utility. The neg's argument proves too much — obviously the government won't pass the plan because two debaters discussed it, but that's not the point. Fiat grounds a stable stasis so both teams can rigorously clash over a defined advocacy instead of devolving into political feasibility contests. That enables us to explore transformative actions and downstream consequences, shaping how debaters think about policy. Finally, mooting: the aff should get to weigh the plan's impacts not because fiat makes them real, but because the resolutional question is the only predictable stasis, so denying us the ability to weigh that as offense is unfair.",
   },
 ];
 
@@ -103,13 +88,12 @@ export default function LandingPage() {
           </p>
 
           <h1 className="max-w-2xl font-[family-name:var(--font-display)] text-5xl leading-[0.95] tracking-tight text-foreground sm:text-6xl">
-            LD prep that{" "}
+            DebateAI{" "}
             <em className="font-[family-name:var(--font-display)] italic text-accent">thinks</em> like a debater.
           </h1>
 
           <p className="max-w-xl text-[1.1rem] leading-relaxed text-foreground/80">
-            DebateAI is fluent in Lincoln-Douglas debate, trained on data from top circuit debaters so it actually
-            thinks like one.
+            DebateAI is fluent in Lincoln-Douglas debate, trained on data from top circuit debaters.
           </p>
 
           <div className="flex flex-wrap gap-3">

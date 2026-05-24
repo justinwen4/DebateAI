@@ -3,6 +3,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 import threading
 from pathlib import Path
 
@@ -132,6 +133,65 @@ def _reseed_if_changed() -> None:
             _last_mtime = path.stat().st_mtime
 
 
+def _parse_perm_axis(text: str, axis: str) -> str | None:
+    """Parse textual/functionally intrinsic vs non-intrinsic from debate perm phrasing."""
+    lowered = text.lower()
+    if re.search(rf"{axis}\s+non[\s-]?intrinsic", lowered):
+        return "non_intrinsic"
+    if re.search(rf"{axis}\s+intrinsic", lowered):
+        return "intrinsic"
+    return None
+
+
+def _parse_perm_slots(text: str) -> dict[str, str | None]:
+    return {
+        "textual": _parse_perm_axis(text, "textually"),
+        "functional": _parse_perm_axis(text, "functionally"),
+    }
+
+
+def _perm_slot_filter_active(query: str, slots: dict[str, str | None]) -> bool:
+    if not any(slots.values()):
+        return False
+    lowered = query.lower()
+    if slots["textual"] and slots["functional"]:
+        return True
+    return "perm" in lowered or "permutation" in lowered
+
+
+def _perm_slots_match(query_slots: dict[str, str | None], doc_input: str) -> bool:
+    doc_slots = _parse_perm_slots(doc_input)
+    for axis in ("textual", "functional"):
+        expected = query_slots[axis]
+        if expected is not None and doc_slots[axis] != expected:
+            return False
+    return True
+
+
+def _filter_perm_slot_matches(query: str, rows: list[dict]) -> list[dict]:
+    query_slots = _parse_perm_slots(query)
+    if not _perm_slot_filter_active(query, query_slots):
+        return rows
+
+    matched = [row for row in rows if _perm_slots_match(query_slots, row["input"])]
+    if matched:
+        logger.info(
+            "[rag] perm slot filter kept %d/%d (textual=%s, functional=%s)",
+            len(matched),
+            len(rows),
+            query_slots["textual"],
+            query_slots["functional"],
+        )
+        return matched
+
+    logger.warning(
+        "[rag] perm slot filter removed all candidates (textual=%s, functional=%s); falling back to top vector hit",
+        query_slots["textual"],
+        query_slots["functional"],
+    )
+    return rows[:1]
+
+
 def _retrieve_sync(query: str, n_results: int = 3, distance_threshold: float = 0.4) -> str:
     """Return top-k debate examples relevant to the query.
 
@@ -141,13 +201,15 @@ def _retrieve_sync(query: str, n_results: int = 3, distance_threshold: float = 0
 
     similarity_threshold = 1.0 - distance_threshold
     query_embedding = _embed(query)
+    query_slots = _parse_perm_slots(query)
+    fetch_count = max(n_results * 4, 10) if _perm_slot_filter_active(query, query_slots) else n_results
 
     try:
         result = _get_supabase().rpc(
             "match_rag_embeddings",
             {
                 "query_embedding": query_embedding,
-                "match_count": n_results,
+                "match_count": fetch_count,
                 "match_threshold": similarity_threshold,
             },
         ).execute()
@@ -158,8 +220,10 @@ def _retrieve_sync(query: str, n_results: int = 3, distance_threshold: float = 0
     if not result.data:
         return ""
 
+    rows = _filter_perm_slot_matches(query, result.data)[:n_results]
+
     pairs = []
-    for row in result.data:
+    for row in rows:
         sim = row["similarity"]
         logger.info("[rag] ✓ sim=%.3f | %s", sim, row["input"][:80])
         pairs.append(f"Q: {row['input']}\nA: {row['output']}")

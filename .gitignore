@@ -8,7 +8,7 @@ __pycache__/
 *.pyc
 .venv/
 
-# ChromaDB local store
+# ChromaDB (replaced by Supabase pgvector — no longer used)
 backend/chroma_db/
 
 # Node

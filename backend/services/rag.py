@@ -6,36 +6,45 @@ import os
 import threading
 from pathlib import Path
 
-import chromadb
+from openai import OpenAI
+from supabase import create_client, Client
 
 logger = logging.getLogger(__name__)
 _reseed_lock = threading.Lock()
 
-COLLECTION_NAME = "debate_analytics"
-DB_DIR = os.path.join(os.path.dirname(__file__), "..", "chroma_db")
 DATASET_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "ml", "dataset.tutor.jsonl")
-HASH_FILE = os.path.join(DB_DIR, ".dataset_hash")
+EMBEDDING_MODEL = "text-embedding-3-small"
+EMBED_BATCH_SIZE = 100
 
-_client: chromadb.ClientAPI | None = None
-_collection: chromadb.Collection | None = None
+_openai_client: OpenAI | None = None
+_supabase_client: Client | None = None
 _last_mtime: float = 0.0
 
 
-def _get_client() -> chromadb.ClientAPI:
-    global _client
-    if _client is None:
-        _client = chromadb.PersistentClient(path=DB_DIR)
-    return _client
+def _get_openai() -> OpenAI:
+    global _openai_client
+    if _openai_client is None:
+        _openai_client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+    return _openai_client
 
 
-def _get_collection() -> chromadb.Collection:
-    global _collection
-    if _collection is None:
-        _collection = _get_client().get_or_create_collection(
-            name=COLLECTION_NAME,
-            metadata={"hnsw:space": "cosine"},
+def _get_supabase() -> Client:
+    global _supabase_client
+    if _supabase_client is None:
+        _supabase_client = create_client(
+            os.environ["SUPABASE_URL"],
+            os.environ["SUPABASE_KEY"],
         )
-    return _collection
+    return _supabase_client
+
+
+def _embed_batch(texts: list[str]) -> list[list[float]]:
+    response = _get_openai().embeddings.create(model=EMBEDDING_MODEL, input=texts)
+    return [item.embedding for item in response.data]
+
+
+def _embed(text: str) -> list[float]:
+    return _embed_batch([text])[0]
 
 
 def _file_hash(path: Path) -> str:
@@ -44,57 +53,71 @@ def _file_hash(path: Path) -> str:
 
 def _needs_reseed(path: Path) -> bool:
     current_hash = _file_hash(path)
-    hash_path = Path(HASH_FILE)
-    if hash_path.exists() and hash_path.read_text().strip() == current_hash:
-        return False
+    try:
+        result = (
+            _get_supabase()
+            .table("rag_metadata")
+            .select("value")
+            .eq("key", "dataset_hash")
+            .maybe_single()
+            .execute()
+        )
+        if result.data and result.data.get("value") == current_hash:
+            return False
+    except Exception:
+        pass
     return True
 
 
-def _save_hash(path: Path) -> None:
-    os.makedirs(DB_DIR, exist_ok=True)
-    Path(HASH_FILE).write_text(_file_hash(path))
-
-
 def _seed_from_dataset_unlocked() -> int:
-    """Load dataset.tutor.jsonl into Chroma. Caller must hold _reseed_lock."""
+    """Load dataset.tutor.jsonl into Supabase pgvector. Caller must hold _reseed_lock."""
     path = Path(DATASET_PATH)
     if not path.exists():
+        logger.info("[rag] dataset.tutor.jsonl not found — skipping seed, using existing Supabase data")
         return 0
 
     if not _needs_reseed(path):
-        return _get_collection().count()
+        result = _get_supabase().table("rag_embeddings").select("id", count="exact").execute()
+        count = result.count or 0
+        logger.info("[rag] dataset unchanged, %d embeddings already in Supabase", count)
+        return count
 
-    global _collection
-    client = _get_client()
-    try:
-        client.delete_collection(COLLECTION_NAME)
-    except Exception:
-        pass
-    _collection = None
-    col = _get_collection()
+    logger.info("[rag] seeding Supabase pgvector from %s", path)
+    lines = path.read_text().strip().splitlines()
+    rows_parsed = [json.loads(line) for line in lines]
 
-    ids, documents, metadatas = [], [], []
-    for i, line in enumerate(path.read_text().strip().splitlines()):
-        row = json.loads(line)
-        ids.append(f"doc_{i}")
-        documents.append(row["input"])
-        metadatas.append({"input": row["input"], "output": row["output"]})
+    sb = _get_supabase()
+    sb.table("rag_embeddings").delete().neq("id", "").execute()
 
-    if ids:
-        col.add(ids=ids, documents=documents, metadatas=metadatas)
+    for batch_start in range(0, len(rows_parsed), EMBED_BATCH_SIZE):
+        batch = rows_parsed[batch_start : batch_start + EMBED_BATCH_SIZE]
+        embeddings = _embed_batch([r["input"] for r in batch])
+        records = [
+            {
+                "id": f"doc_{batch_start + i}",
+                "input": r["input"],
+                "output": r["output"],
+                "embedding": emb,
+            }
+            for i, (r, emb) in enumerate(zip(batch, embeddings))
+        ]
+        sb.table("rag_embeddings").upsert(records).execute()
+        logger.info("[rag] seeded batch %d–%d", batch_start, batch_start + len(batch) - 1)
 
-    _save_hash(path)
-    return len(ids)
+    current_hash = _file_hash(path)
+    sb.table("rag_metadata").upsert({"key": "dataset_hash", "value": current_hash}).execute()
+    logger.info("[rag] seeded %d embeddings total", len(rows_parsed))
+    return len(rows_parsed)
 
 
 def seed_from_dataset() -> int:
-    """Load dataset.tutor.jsonl into Chroma, reseeding if the file changed."""
+    """Load dataset.tutor.jsonl into Supabase pgvector, reseeding if the file changed."""
     with _reseed_lock:
         return _seed_from_dataset_unlocked()
 
 
 def _reseed_if_changed() -> None:
-    """Reseed Chroma if dataset.tutor.jsonl has been modified since last check."""
+    """Reseed if dataset.tutor.jsonl has been modified since last check."""
     global _last_mtime
     path = Path(DATASET_PATH)
     if not path.exists():
@@ -110,35 +133,41 @@ def _reseed_if_changed() -> None:
 
 
 def _retrieve_sync(query: str, n_results: int = 3, distance_threshold: float = 0.4) -> str:
-    """Return top-k debate analytics relevant to the query.
+    """Return top-k debate examples relevant to the query.
 
-    Results whose cosine distance exceeds distance_threshold are dropped, so
-    the number of returned examples may be fewer than n_results (including zero).
+    distance_threshold is converted to cosine similarity (similarity = 1 - distance).
     """
     _reseed_if_changed()
-    col = _get_collection()
-    if col.count() == 0:
+
+    similarity_threshold = 1.0 - distance_threshold
+    query_embedding = _embed(query)
+
+    try:
+        result = _get_supabase().rpc(
+            "match_rag_embeddings",
+            {
+                "query_embedding": query_embedding,
+                "match_count": n_results,
+                "match_threshold": similarity_threshold,
+            },
+        ).execute()
+    except Exception as exc:
+        logger.warning("[rag] retrieval failed: %s", exc)
         return ""
 
-    results = col.query(
-        query_texts=[query],
-        n_results=min(n_results, col.count()),
-        include=["metadatas", "distances"],
-    )
-    metas = results.get("metadatas", [[]])[0]
-    distances = results.get("distances", [[]])[0]
-    if not metas:
+    if not result.data:
         return ""
+
     pairs = []
-    for m, d in zip(metas, distances):
-        status = "✓" if d <= distance_threshold else "✗"
-        logger.info("[rag] %s dist=%.3f | %s", status, d, m['input'][:80])
-        if d <= distance_threshold:
-            pairs.append(f"Q: {m['input']}\nA: {m['output']}")
-    logger.info("[rag] %d/%d results passed threshold %.2f", len(pairs), len(metas), distance_threshold)
+    for row in result.data:
+        sim = row["similarity"]
+        logger.info("[rag] ✓ sim=%.3f | %s", sim, row["input"][:80])
+        pairs.append(f"Q: {row['input']}\nA: {row['output']}")
+
+    logger.info("[rag] %d/%d results passed threshold %.2f", len(pairs), n_results, similarity_threshold)
     return "\n\n---\n\n".join(pairs)
 
 
 async def retrieve(query: str, n_results: int = 3, distance_threshold: float = 0.4) -> str:
-    """Return top-k debate analytics relevant to the query (non-blocking)."""
+    """Return top-k debate examples relevant to the query (non-blocking)."""
     return await asyncio.to_thread(_retrieve_sync, query, n_results, distance_threshold)

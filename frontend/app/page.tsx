@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { LogoWithLabel } from "@/app/components/Logo";
 import ThemeToggle from "@/app/components/ThemeToggle";
 import RotatingQACard, { type SampleQA } from "@/app/components/RotatingQACard";
 
@@ -38,11 +39,11 @@ const valueProps = [
 const testimonials = [
   {
     quote: "I've never engaged with an AI that actually knows what a K is.",
-    attribution: "LD DEBATER, 3× TOC QUALIFIER",
+    attribution: "LD DEBATER, TOC QUALIFIER",
   },
   {
     quote:
-      "I've previously found it discouraging to try and understand philosophy and theory. DebateAI has significantly improved my understanding.",
+      "I've always been confused by theory. DebateAI has significantly improved my understanding.",
     attribution: "LD DEBATER, TFA QUALIFIER",
   },
   {
@@ -57,12 +58,7 @@ export default function LandingPage() {
     <main className="min-h-full bg-background text-foreground">
       <header className="sticky top-0 z-50 border-b border-border-subtle bg-background/95 backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
-          <div className="flex items-center gap-2.5">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-foreground text-[12px] font-semibold text-background">
-              D
-            </div>
-            <span className="text-[15px] font-semibold tracking-tight">DebateAI</span>
-          </div>
+          <LogoWithLabel />
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Link
@@ -183,12 +179,7 @@ export default function LandingPage() {
       <footer className="bg-[#0f1722] text-white/70">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-8 px-6 py-10 sm:flex-row sm:items-center">
           <div>
-            <div className="flex items-center gap-2.5">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-white/10 text-sm font-semibold text-white">
-                D
-              </span>
-              <span className="font-semibold text-white">DebateAI</span>
-            </div>
+            <LogoWithLabel labelClassName="font-semibold text-white" />
             <p className="mt-2 text-sm">Lincoln-Douglas AI, built by the circuit.</p>
           </div>
           <div className="flex items-center gap-6 text-sm">

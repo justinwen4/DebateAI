@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { LogoWithLabel } from "@/app/components/Logo";
 import ThemeToggle from "@/app/components/ThemeToggle";
 import { useAuth } from "@/app/context/AuthContext";
 import { supabase } from "@/app/lib/supabase";
@@ -56,11 +57,8 @@ export default function LoginPage() {
     <main className="min-h-full bg-background px-6 py-10">
       <div className="mx-auto w-full max-w-md">
         <div className="mb-8 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-foreground text-[12px] font-semibold text-background">
-              D
-            </div>
-            <span className="text-[15px] font-semibold tracking-tight text-foreground">DebateAI</span>
+          <Link href="/">
+            <LogoWithLabel labelClassName="text-[15px] font-semibold tracking-tight text-foreground" />
           </Link>
           <ThemeToggle />
         </div>

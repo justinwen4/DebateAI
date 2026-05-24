@@ -1,6 +1,7 @@
 "use client";
 
 import { RefObject, useState } from "react";
+import { Logo } from "@/app/components/Logo";
 
 export interface Message {
   id: string;
@@ -144,7 +145,7 @@ export default function MessageList({ messages, loading, scrollRef, onFeedback }
       <div ref={scrollRef} className="flex-1 overflow-y-auto flex items-center justify-center">
         <div className="text-center px-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-accent/10 to-accent/20 flex items-center justify-center mx-auto mb-4">
-            <span className="text-accent text-lg font-bold">D</span>
+            <Logo size={36} className="rounded-lg" />
           </div>
           <p className="text-sm text-foreground/80 font-medium mb-1">Start a conversation</p>
           <p className="text-[13px] text-muted">Ask a debate question to get started.</p>

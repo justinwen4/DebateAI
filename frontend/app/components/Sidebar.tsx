@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { LogoWithLabel } from "@/app/components/Logo";
 
 interface ConversationSummary {
   id: string;
@@ -51,14 +52,7 @@ export default function Sidebar({
   return (
     <aside className="w-60 shrink-0 border-r border-border-subtle bg-surface flex flex-col h-full">
       <div className="px-4 pt-5 pb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-foreground flex items-center justify-center text-background font-semibold text-[11px]">
-            D
-          </div>
-          <span className="font-semibold text-[15px] tracking-tight text-foreground">
-            DebateAI
-          </span>
-        </div>
+        <LogoWithLabel size={28} labelClassName="font-semibold text-[15px] tracking-tight text-foreground" />
       </div>
 
       <div className="px-3 mb-3">

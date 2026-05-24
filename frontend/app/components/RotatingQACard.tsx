@@ -12,11 +12,16 @@ type RotatingQACardProps = {
   intervalMs?: number;
 };
 
+const RATING_LABELS = ["", "Poor", "Weak", "Mixed", "Good", "Strong"] as const;
+
 export default function RotatingQACard({ items, intervalMs = 7000 }: RotatingQACardProps) {
   const safeItems = useMemo(() => (items.length > 0 ? items : [{ question: "", answer: "" }]), [items]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [rating, setRating] = useState<number | null>(null);
+  const [notes, setNotes] = useState("");
+  const [feedbackSent, setFeedbackSent] = useState(false);
 
   const setCardIndex = (index: number) => {
     if (isAnimating || index === activeIndex) return;
@@ -24,6 +29,9 @@ export default function RotatingQACard({ items, intervalMs = 7000 }: RotatingQAC
     setIsVisible(false);
     window.setTimeout(() => {
       setActiveIndex(index);
+      setRating(null);
+      setNotes("");
+      setFeedbackSent(false);
       setIsVisible(true);
       setIsAnimating(false);
     }, 180);
@@ -93,33 +101,58 @@ export default function RotatingQACard({ items, intervalMs = 7000 }: RotatingQAC
 
         <div className="space-y-3">
           <p className="text-xs text-muted">Rate this response: 1 = poor · 5 = great</p>
-          <div className="flex items-center gap-1.5">
-            {[1, 2, 3, 4, 5].map((rating) => (
-              <button
-                key={rating}
-                type="button"
-                className="grid h-9 w-9 place-items-center rounded-md border border-border text-sm text-muted transition-colors hover:border-accent/40 hover:text-accent"
-              >
-                {rating}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              placeholder="Notes (optional)"
-              readOnly
-              className="h-10 flex-1 rounded-md border border-border bg-background px-3 text-sm text-muted outline-none"
-            />
-            <button
-              type="button"
-              disabled
-              className="h-10 shrink-0 rounded-md bg-foreground px-5 text-sm font-semibold text-background disabled:cursor-not-allowed"
-            >
-              Send feedback
-            </button>
-            <span className="shrink-0 cursor-pointer text-sm text-muted">Skip</span>
-          </div>
+          {feedbackSent ? (
+            <p className="text-sm text-muted">Thanks — sign up to save feedback and improve future answers.</p>
+          ) : (
+            <>
+              <div className="flex items-center gap-1.5">
+                {[1, 2, 3, 4, 5].map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setRating(value)}
+                    title={RATING_LABELS[value]}
+                    aria-pressed={rating === value}
+                    className={`grid h-9 w-9 place-items-center rounded-md border text-sm font-medium transition-colors ${
+                      rating === value
+                        ? "border-accent bg-accent text-background"
+                        : "border-border text-muted hover:border-accent/40 hover:text-accent"
+                    }`}
+                  >
+                    {value}
+                  </button>
+                ))}
+                {rating && <span className="ml-1.5 text-xs text-muted">{RATING_LABELS[rating]}</span>}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Notes (optional)"
+                  className="h-10 flex-1 rounded-md border border-border bg-background px-3 text-sm text-foreground outline-none placeholder:text-muted focus:border-accent/40"
+                />
+                <button
+                  type="button"
+                  disabled={!rating}
+                  onClick={() => setFeedbackSent(true)}
+                  className="h-10 shrink-0 rounded-md bg-foreground px-5 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Send feedback
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRating(null);
+                    setNotes("");
+                  }}
+                  className="shrink-0 text-sm text-muted transition-colors hover:text-foreground"
+                >
+                  Skip
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         <p className="text-center text-xs text-muted">&uarr; Sign up to ask your own questions</p>

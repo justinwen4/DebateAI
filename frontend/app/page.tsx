@@ -42,13 +42,13 @@ const testimonials = [
   },
   {
     quote:
-      "I've consistently found it discouraging to diversify my argument palate with philosophy and theory. DebateAI has helped significantly with my understanding.",
+      "I've previously found it discouraging to try and understand philosophy and theory. DebateAI has significantly improved my understanding in a short timeframe.",
     attribution: "LD DEBATER, TFA QUALIFIER",
   },
   {
     quote:
-      "It catches nuance in T interps that other tools miss entirely. Genuinely felt like prepping with a teammate.",
-    attribution: "LD DEBATER, OCTAS AT BRONX",
+      "It catches nuance that even my teammates miss entirely.",
+    attribution: "LD DEBATER, NSDA QUALIFIER",
   },
 ];
 
@@ -107,7 +107,7 @@ export default function LandingPage() {
         </div>
 
         <div id="how-it-thinks">
-          <p className="mb-2 text-sm text-muted">&larr; Sample responses from the AI</p>
+          <p className="mb-2 text-sm text-muted">Sample responses from the AI</p>
           <RotatingQACard items={samplePairs} />
         </div>
       </section>

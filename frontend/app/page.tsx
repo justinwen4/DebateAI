@@ -7,7 +7,7 @@ import RotatingQACard, { type SampleQA } from "@/app/components/RotatingQACard";
 
 const samplePairs: SampleQA[] = [
   {
-    question: "Why shouldn't we evaluate the plan text in a vacuum?",
+    question: "I'm going for topicality. How do I answer plan text in a vacuum?",
     answer:
       "Plan text in a vacuum creates a moral hazard: it allows any aff to be topical just by including the topic in the plan text. That justifies reading affs from previous topics, destroying debate, and forces every 2NR to be split between T and substance just to hold the aff to a stable advocacy. That sets the threshold for a negative win too high.",
   },
@@ -17,7 +17,7 @@ const samplePairs: SampleQA[] = [
       "PICs are good for three reasons. First, logic and clash: PICs show a part of the plan is flawed and should be excluded. Arbitrarily excluding legitimate neg offense is unpredictable and a slippery slope to excluding all counterplans. Second, neg flex: the aff chooses the plan and gets first and last speech advantage. That's also terminal defense because we can only negate what the aff chooses to defend. Third, real world education: PICs mirror real-world policymaking, where bills are often amended, fostering better clash and understanding which is the only portable impact.",
   },
   {
-    question: "How can the aff answer \"fiat is illusory\"?",
+    question: "I'm debating against a kritik. How do I respond to \"fiat is illusory\"?",
     answer:
       "Fiat being illusory is irrelevant to it's utility. The neg's argument proves too much — obviously the government won't pass the plan because two debaters discussed it, but that's not the point. Fiat grounds a stable stasis so both teams can rigorously clash over a defined advocacy instead of devolving into political feasibility contests. That enables us to explore transformative actions and downstream consequences, shaping how debaters think about policy. Finally, mooting: the aff should get to weigh the plan's impacts not because fiat makes them real, but because the resolutional question is the only predictable stasis, so denying us the ability to weigh that as offense is unfair.",
   },
@@ -32,7 +32,7 @@ const valueProps = [
   {
     label: "Coverage",
     heading: "Conceptual Grasp",
-    body: "Moral philosophy, Kritiks, T/Theory - the technical vocabulary.",
+    body: "DebateAI is best used for analytical discussions - including Philosophy, Kritiks, and Theory.",
   },
 ];
 

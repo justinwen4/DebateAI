@@ -31,7 +31,7 @@ const valueProps = [
   {
     label: "Coverage",
     heading: "Conceptual Grasp",
-    body: "Moral philosophy, Kritiks, T/Theory - the technical vocabulary, not generic AI hand-waving.",
+    body: "Moral philosophy, Kritiks, T/Theory - the technical vocabulary.",
   },
 ];
 
@@ -42,7 +42,7 @@ const testimonials = [
   },
   {
     quote:
-      "I've previously found it discouraging to try and understand philosophy and theory. DebateAI has significantly improved my understanding in a short timeframe.",
+      "I've previously found it discouraging to try and understand philosophy and theory. DebateAI has significantly improved my understanding.",
     attribution: "LD DEBATER, TFA QUALIFIER",
   },
   {
@@ -107,7 +107,7 @@ export default function LandingPage() {
         </div>
 
         <div id="how-it-thinks">
-          <p className="mb-2 text-sm text-muted">Sample responses from the AI</p>
+          <p className="mb-2 text-sm text-muted">&darr; Sample responses from the AI</p>
           <RotatingQACard items={samplePairs} />
         </div>
       </section>
@@ -139,9 +139,14 @@ export default function LandingPage() {
       <section className="border-y border-border-subtle bg-surface/40">
         <div className="mx-auto max-w-6xl px-6 py-16 text-center">
           <p className="text-lg text-foreground/80">
-            Trusted by competitors who have won <strong className="text-foreground">Emory</strong>,{" "}
-            <strong className="text-foreground">Harvard</strong>, <strong className="text-foreground">Greenhill</strong>
-            , and <strong className="text-foreground">UT</strong>.
+            Trusted by champions and runner-ups of the{" "}
+            <strong className="text-foreground">TOC</strong>,{" "}
+            <strong className="text-foreground">Harvard</strong>,{" "}
+            <strong className="text-foreground">Emory</strong>,{" "}
+            <strong className="text-foreground">Greenhill</strong>,{" "}
+            <strong className="text-foreground">Glenbrooks</strong>,{" "}
+            <strong className="text-foreground">UT</strong>,{" "}
+            <strong className="text-foreground">Yale</strong>, and more.
           </p>
           <div className="mt-10 grid gap-6 md:grid-cols-3">
             {testimonials.map((t) => (

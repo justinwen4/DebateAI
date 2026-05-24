@@ -11,7 +11,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
 )
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from pydantic import BaseModel, Field
@@ -20,6 +20,7 @@ from supabase import create_client, Client
 load_dotenv()
 
 from services.llm import generate_response
+from services.metrics import fetch_product_metrics, is_admin_configured, verify_admin_key
 from services.rag import retrieve, seed_from_dataset
 
 _supabase: Client | None = None
@@ -92,6 +93,32 @@ class FeedbackRequest(BaseModel):
     rating: int = Field(ge=1, le=5)
     notes: str = ""
     curation_eligible: bool = False
+
+
+def _require_admin(
+    authorization: str | None = Header(default=None),
+    x_admin_key: str | None = Header(default=None, alias="X-Admin-Key"),
+) -> None:
+    if not is_admin_configured():
+        raise HTTPException(status_code=503, detail="Admin metrics are not configured")
+    token: str | None = None
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.removeprefix("Bearer ").strip()
+    elif x_admin_key:
+        token = x_admin_key.strip()
+    if not verify_admin_key(token):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+@app.get("/admin/metrics")
+async def admin_metrics(
+    days: int = Query(default=30, ge=1, le=365),
+    _: None = Depends(_require_admin),
+):
+    try:
+        return fetch_product_metrics(_get_supabase(), days=days)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch metrics: {e}")
 
 
 @app.post("/feedback")

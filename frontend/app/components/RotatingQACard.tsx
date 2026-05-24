@@ -155,7 +155,7 @@ export default function RotatingQACard({ items, intervalMs = 7000 }: RotatingQAC
           )}
         </div>
 
-        <p className="text-center text-xs text-muted">&uarr; Sign up to ask your own questions</p>
+        <p className="text-center text-xs text-muted">&darr; Sign up to ask your own questions</p>
 
         <div className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 text-sm text-muted">
           <span>Ask a debate question...</span>

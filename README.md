@@ -34,6 +34,7 @@ The API runs at `http://localhost:8000`. On startup it seeds the vector store fr
 | `ANTHROPIC_API_KEY` | Claude generation |
 | `SUPABASE_URL` | Feedback storage |
 | `SUPABASE_KEY` | Supabase service role key |
+| `ADMIN_API_KEY` | Secret for `GET /admin/metrics` (optional) |
 
 ### 2. Frontend
 
@@ -85,6 +86,39 @@ Open `http://localhost:3000`.
 ```
 
 `curation_eligible` should be `true` only for feedback attached to the first user turn in a chat. This keeps follow-up prompts like "can you elaborate?" out of training curation.
+
+**GET /admin/metrics** (requires `ADMIN_API_KEY`)
+
+```bash
+curl -H "Authorization: Bearer $ADMIN_API_KEY" \
+  "http://localhost:8000/admin/metrics?days=30"
+```
+
+```json
+{
+  "summary": {
+    "period_days": 30,
+    "active_users": 3,
+    "total_prompts": 42,
+    "conversations_started": 8,
+    "avg_prompts_per_active_user": 14.0,
+    "signups": 5,
+    "feedback_count": 2,
+    "feedback_avg_rating": 4.5
+  },
+  "daily": [
+    {
+      "day": "2026-05-01",
+      "prompts": 5,
+      "assistant_messages": 5,
+      "active_users": 2,
+      "conversations_touched": 2
+    }
+  ]
+}
+```
+
+Product metrics are computed from Supabase `messages`, `conversations`, `auth.users`, and `feedback`. You can also query `analytics.daily_metrics` directly in the Supabase SQL Editor.
 
 ## Project Structure
 

@@ -15,7 +15,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [checkEmailMessage, setCheckEmailMessage] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -29,13 +29,13 @@ export default function SignupPage() {
 
     setSubmitting(true);
     setError(null);
-    setCheckEmailMessage(null);
 
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
     const { data, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${siteUrl}/auth/callback`,
       },
     });
 
@@ -50,7 +50,7 @@ export default function SignupPage() {
       return;
     }
 
-    setCheckEmailMessage("Check your email for a confirmation link to finish creating your account.");
+    setSent(true);
     setSubmitting(false);
   };
 
@@ -75,64 +75,101 @@ export default function SignupPage() {
         </div>
 
         <div className="rounded-2xl border border-border bg-surface p-6 shadow-[var(--shadow-md)]">
-          <h1 className="font-[family-name:var(--font-display)] text-4xl leading-none tracking-tight text-foreground">
-            Create account
-          </h1>
-          <p className="mt-2 text-sm text-muted">Start using DebateAI in under a minute.</p>
+          {sent ? (
+            <>
+              <h1 className="font-[family-name:var(--font-display)] text-4xl leading-none tracking-tight text-foreground">
+                Email sent
+              </h1>
+              <p className="mt-2 text-sm text-muted">
+                We sent a confirmation link to <strong className="text-foreground">{email}</strong>.
+              </p>
 
-          <form onSubmit={onSubmit} className="mt-6 space-y-4">
-            <div className="space-y-1.5">
-              <label htmlFor="email" className="text-sm font-medium text-foreground">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-                className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted focus:border-accent"
-                placeholder="you@school.edu"
-              />
-            </div>
+              <div className="mt-6 space-y-4 text-sm text-foreground">
+                <p>
+                  Open the email and click the confirmation link to activate your account.
+                  Be sure to check your <strong>spam</strong> folder if you don&apos;t see it.
+                </p>
+                <p>
+                  Once confirmed, you can log in with the password you just chose.
+                </p>
+              </div>
 
-            <div className="space-y-1.5">
-              <label htmlFor="password" className="text-sm font-medium text-foreground">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                autoComplete="new-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-                minLength={6}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted focus:border-accent"
-                placeholder="At least 6 characters"
-              />
-            </div>
+              <Link
+                href="/login"
+                className="mt-6 block w-full rounded-lg bg-accent px-4 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-accent-hover"
+              >
+                Go to log in &rarr;
+              </Link>
 
-            {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
-            {checkEmailMessage ? <p className="text-sm text-foreground">{checkEmailMessage}</p> : null}
+              <button
+                type="button"
+                onClick={() => setSent(false)}
+                className="mt-3 w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-surface-hover"
+              >
+                Use a different email
+              </button>
+            </>
+          ) : (
+            <>
+              <h1 className="font-[family-name:var(--font-display)] text-4xl leading-none tracking-tight text-foreground">
+                Create account
+              </h1>
+              <p className="mt-2 text-sm text-muted">Start using DebateAI in under a minute.</p>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {submitting ? "Creating account..." : "Create account"}
-            </button>
-          </form>
+              <form onSubmit={onSubmit} className="mt-6 space-y-4">
+                <div className="space-y-1.5">
+                  <label htmlFor="email" className="text-sm font-medium text-foreground">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    required
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted focus:border-accent"
+                    placeholder="you@school.edu"
+                  />
+                </div>
 
-          <p className="mt-5 text-sm text-muted">
-            Already have an account?{" "}
-            <Link href="/login" className="font-medium text-foreground underline-offset-4 hover:underline">
-              Log in
-            </Link>
-            .
-          </p>
+                <div className="space-y-1.5">
+                  <label htmlFor="password" className="text-sm font-medium text-foreground">
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    required
+                    minLength={6}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted focus:border-accent"
+                    placeholder="At least 6 characters"
+                  />
+                </div>
+
+                {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {submitting ? "Creating account..." : "Create account"}
+                </button>
+              </form>
+
+              <p className="mt-5 text-sm text-muted">
+                Already have an account?{" "}
+                <Link href="/login" className="font-medium text-foreground underline-offset-4 hover:underline">
+                  Log in
+                </Link>
+                .
+              </p>
+            </>
+          )}
         </div>
       </div>
     </main>

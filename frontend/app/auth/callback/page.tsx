@@ -18,6 +18,8 @@ function CallbackHandler() {
       return;
     }
 
+    const next = searchParams.get("next") ?? "/chat";
+
     supabase.auth
       .exchangeCodeForSession(code)
       .then(({ error: exchangeError }) => {
@@ -25,7 +27,7 @@ function CallbackHandler() {
           setError(exchangeError.message);
           return;
         }
-        router.replace("/chat");
+        router.replace(next);
       });
   }, [router, searchParams]);
 

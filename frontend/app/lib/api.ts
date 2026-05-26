@@ -1,6 +1,14 @@
 import { supabase } from "@/app/lib/supabase";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+function normalizeApiUrl(raw: string): string {
+  const trimmed = raw.trim().replace(/\/$/, "");
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+}
+
+const API_URL = normalizeApiUrl(process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000");
 
 async function getAccessToken(): Promise<string> {
   const {

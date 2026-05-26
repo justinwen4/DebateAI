@@ -22,7 +22,7 @@ def get_monthly_count(supabase: Client, user_id: str) -> int:
         .maybe_single()
         .execute()
     )
-    if result.data:
+    if result and result.data:
         return int(result.data["generation_count"])
     return 0
 

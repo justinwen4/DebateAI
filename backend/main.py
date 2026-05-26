@@ -78,11 +78,18 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-_allowed_origins = [
-    origin.strip()
-    for origin in os.environ.get("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
-    if origin.strip()
-]
+def _parse_allowed_origins(raw: str) -> list[str]:
+    origins: list[str] = []
+    for origin in raw.split(","):
+        cleaned = origin.strip().rstrip("/")
+        if cleaned:
+            origins.append(cleaned)
+    return origins
+
+
+_allowed_origins = _parse_allowed_origins(
+    os.environ.get("ALLOWED_ORIGINS", "http://localhost:3000")
+)
 
 app.add_middleware(
     CORSMiddleware,

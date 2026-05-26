@@ -63,7 +63,7 @@ def _needs_reseed(path: Path) -> bool:
             .maybe_single()
             .execute()
         )
-        if result.data and result.data.get("value") == current_hash:
+        if result and result.data and result.data.get("value") == current_hash:
             return False
     except Exception:
         pass

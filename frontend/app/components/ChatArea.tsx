@@ -6,6 +6,13 @@ import InputBar from "./InputBar";
 import ThemeToggle from "./ThemeToggle";
 import { buildConversationTitle } from "@/app/lib/conversationTitle";
 
+export interface UsageBannerState {
+  message: string;
+  tier: "premium" | "standard";
+  monthlyUsage: number;
+  premiumLimit: number;
+}
+
 interface ChatAreaProps {
   messages: Message[];
   input: string;
@@ -14,6 +21,8 @@ interface ChatAreaProps {
   onFeedback: (messageId: string, rating: number, notes: string) => Promise<void>;
   loading: boolean;
   scrollRef: RefObject<HTMLDivElement | null>;
+  usageBanner: UsageBannerState | null;
+  onDismissUsageBanner: () => void;
 }
 
 export default function ChatArea({
@@ -24,6 +33,8 @@ export default function ChatArea({
   onFeedback,
   loading,
   scrollRef,
+  usageBanner,
+  onDismissUsageBanner,
 }: ChatAreaProps) {
   const firstUserMsg = messages.find((m) => m.role === "user");
   const title = firstUserMsg ? buildConversationTitle(firstUserMsg.content) : "New conversation";
@@ -38,6 +49,23 @@ export default function ChatArea({
           <ThemeToggle />
         </div>
       </header>
+
+      {usageBanner?.tier === "standard" ? (
+        <div className="shrink-0 border-b border-amber-500/30 bg-amber-500/10 px-6 py-3">
+          <div className="flex items-start justify-between gap-4">
+            <p className="text-sm leading-relaxed text-foreground">
+              {usageBanner.message}
+            </p>
+            <button
+              type="button"
+              onClick={onDismissUsageBanner}
+              className="shrink-0 text-xs font-medium text-muted transition-colors hover:text-foreground"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <MessageList messages={messages} loading={loading} scrollRef={scrollRef} onFeedback={onFeedback} />
       <InputBar input={input} setInput={setInput} onSend={onSend} loading={loading} />

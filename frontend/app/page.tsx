@@ -189,8 +189,8 @@ export default function LandingPage() {
             <Link href="/" className="transition-colors hover:text-white">
               Home
             </Link>
-            <Link href="#" className="transition-colors hover:text-white">
-              About
+            <Link href="/privacy" className="transition-colors hover:text-white">
+              Privacy
             </Link>
           </div>
           <div className="flex items-center gap-3">

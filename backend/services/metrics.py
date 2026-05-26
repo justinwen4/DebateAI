@@ -1,3 +1,5 @@
+import secrets
+
 import os
 
 from supabase import Client
@@ -25,4 +27,4 @@ def verify_admin_key(provided: str | None) -> bool:
     expected = os.environ.get("ADMIN_API_KEY", "").strip()
     if not expected or not provided:
         return False
-    return provided == expected
+    return secrets.compare_digest(provided, expected)

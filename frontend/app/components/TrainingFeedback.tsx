@@ -1,12 +1,14 @@
 "use client";
 
 import { FormEvent, useRef, useState } from "react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+import Link from "next/link";
+import { useAuth } from "@/app/context/AuthContext";
+import { apiFetch } from "@/app/lib/api";
 
 type FormStatus = "idle" | "submitting" | "success" | "error";
 
 export default function TrainingFeedback() {
+  const { user, loading: authLoading } = useAuth();
   const [area, setArea] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
   const [status, setStatus] = useState<FormStatus>("idle");
@@ -22,6 +24,12 @@ export default function TrainingFeedback() {
       return;
     }
 
+    if (!user) {
+      setStatus("error");
+      setErrorMessage("Please sign in to submit a training suggestion.");
+      return;
+    }
+
     setStatus("submitting");
     setErrorMessage("");
 
@@ -34,7 +42,7 @@ export default function TrainingFeedback() {
     }
 
     try {
-      const res = await fetch(`${API_URL}/training-request`, {
+      const res = await apiFetch("/training-request", {
         method: "POST",
         body: formData,
       });
@@ -85,6 +93,19 @@ export default function TrainingFeedback() {
               >
                 Submit another suggestion
               </button>
+            </div>
+          ) : !authLoading && !user ? (
+            <div className="rounded-xl border border-border bg-surface px-6 py-5 shadow-[var(--shadow-sm)]">
+              <p className="font-medium text-foreground">Sign in to submit suggestions</p>
+              <p className="mt-2 text-sm leading-relaxed text-foreground/80">
+                Training suggestions are tied to your account so we can follow up if needed.
+              </p>
+              <Link
+                href="/login?next=/"
+                className="mt-4 inline-block text-sm font-medium text-accent transition-colors hover:text-foreground"
+              >
+                Sign in
+              </Link>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">

@@ -3,9 +3,10 @@ import os
 
 from anthropic import Anthropic
 
+from services.limits import PREMIUM_MODEL
+
 client: Anthropic | None = None
 MAX_HISTORY_TURNS = 8
-MODEL = "claude-sonnet-4-6"
 
 SYSTEM_PROMPT = """
 You are a sharp Lincoln-Douglas (LD) debate coach / tutor. The student already knows basic debate terms (1AR, 2AR, 2NR, CX, K, framework, perm, link, alt, etc.) — do NOT define them.
@@ -68,7 +69,10 @@ def _sanitize_history(history: list[dict[str, str]] | None) -> list[dict[str, st
 
 
 def _generate_response_sync(
-    prompt: str, context: str = "", history: list[dict[str, str]] | None = None
+    prompt: str,
+    context: str = "",
+    history: list[dict[str, str]] | None = None,
+    model: str = PREMIUM_MODEL,
 ) -> str:
     """Generate a tutor-style response for the given debate question."""
     system = SYSTEM_PROMPT
@@ -82,7 +86,7 @@ def _generate_response_sync(
     messages.append({"role": "user", "content": prompt})
 
     msg = _get_client().messages.create(
-        model=MODEL,
+        model=model,
         system=system,
         messages=messages,
         temperature=0.2,
@@ -93,7 +97,10 @@ def _generate_response_sync(
 
 
 async def generate_response(
-    prompt: str, context: str = "", history: list[dict[str, str]] | None = None
+    prompt: str,
+    context: str = "",
+    history: list[dict[str, str]] | None = None,
+    model: str = PREMIUM_MODEL,
 ) -> str:
     """Generate a tutor-style response (non-blocking)."""
-    return await asyncio.to_thread(_generate_response_sync, prompt, context, history)
+    return await asyncio.to_thread(_generate_response_sync, prompt, context, history, model)

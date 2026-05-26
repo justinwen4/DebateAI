@@ -8,8 +8,8 @@ import { Message } from "@/app/components/MessageList";
 import { useAuth } from "@/app/context/AuthContext";
 import { supabase } from "@/app/lib/supabase";
 import { buildConversationTitle } from "@/app/lib/conversationTitle";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+import { apiFetch } from "@/app/lib/api";
+import type { UsageBannerState } from "@/app/components/ChatArea";
 
 interface ConversationSummary {
   id: string;
@@ -23,6 +23,14 @@ interface DatabaseMessage {
   content: string;
 }
 
+interface GenerateApiResponse {
+  output: string;
+  model_tier: "premium" | "standard";
+  monthly_usage: number;
+  premium_monthly_limit: number;
+  notice: string | null;
+}
+
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -31,6 +39,7 @@ export default function ChatPage() {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
+  const [usageBanner, setUsageBanner] = useState<UsageBannerState | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { user, loading: authLoading, signOut } = useAuth();
@@ -158,16 +167,31 @@ export default function ChatPage() {
       }
 
       try {
-        const res = await fetch(`${API_URL}/generate`, {
+        const res = await apiFetch("/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ prompt: text, history }),
         });
 
-        if (!res.ok) throw new Error(`API error ${res.status}`);
+        if (!res.ok) {
+          if (res.status === 429) {
+            throw new Error("Daily limit reached. Try again tomorrow.");
+          }
+          throw new Error(`API error ${res.status}`);
+        }
 
-        const data = await res.json();
-        const botText = data.output as string;
+        const data = (await res.json()) as GenerateApiResponse;
+        const botText = data.output;
+        if (data.model_tier === "standard") {
+          setUsageBanner({
+            tier: "standard",
+            monthlyUsage: data.monthly_usage,
+            premiumLimit: data.premium_monthly_limit,
+            message:
+              data.notice ??
+              `You've used ${data.monthly_usage}/${data.premium_monthly_limit} premium responses this month. Continuing on our standard model (Haiku) until your limit resets.`,
+          });
+        }
         const botMsg: Message = { id: crypto.randomUUID(), role: "assistant", content: botText };
         setMessages((prev) => [...prev, botMsg]);
         await supabase.from("messages").insert({
@@ -175,8 +199,11 @@ export default function ChatPage() {
           role: "assistant",
           content: botText,
         });
-      } catch {
-        const fallbackText = "Something went wrong — the backend may be unreachable.";
+      } catch (err) {
+        const fallbackText =
+          err instanceof Error && err.message.includes("Daily limit")
+            ? err.message
+            : "Something went wrong — the backend may be unreachable.";
         const errMsg: Message = {
           id: crypto.randomUUID(),
           role: "assistant",
@@ -209,7 +236,7 @@ export default function ChatPage() {
       const firstUserMsg = messages.find((m) => m.role === "user");
       const curationEligible = firstUserMsg?.id === userMsg.id;
 
-      const res = await fetch(`${API_URL}/feedback`, {
+      const res = await apiFetch("/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -311,6 +338,8 @@ export default function ChatPage() {
         onFeedback={handleFeedback}
         loading={loading}
         scrollRef={scrollRef}
+        usageBanner={usageBanner}
+        onDismissUsageBanner={() => setUsageBanner(null)}
       />
     </div>
   );

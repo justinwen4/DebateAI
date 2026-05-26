@@ -57,31 +57,31 @@ export default function TrainingFeedback() {
   };
 
   return (
-    <section className="bg-[#111b28] text-white">
+    <section className="border-y border-border-subtle bg-surface/60">
       <div className="mx-auto w-full max-w-6xl px-6 py-16">
         <div className="mx-auto max-w-2xl space-y-8">
           <div className="space-y-3 border-l-2 border-accent pl-6">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-accent">Improve DebateAI</p>
-            <h3 className="font-[family-name:var(--font-display)] text-4xl leading-[0.95] tracking-tight text-white sm:text-5xl">
+            <h3 className="font-[family-name:var(--font-display)] text-4xl leading-[0.95] tracking-tight text-foreground sm:text-5xl">
               Help us train smarter
             </h3>
-            <p className="text-[1.05rem] leading-relaxed text-white/70 sm:text-[1.15rem]">
+            <p className="text-[1.05rem] leading-relaxed text-foreground/80 sm:text-[1.15rem]">
               Got a topic you wish DebateAI knew better? Tell us what areas you&apos;d like to see more training on — or
               drop a file with examples — and we&apos;ll use it to improve future updates.
             </p>
           </div>
 
           {status === "success" ? (
-            <div className="rounded-xl border border-accent/30 bg-white/5 px-6 py-5">
-              <p className="font-medium text-white">Thanks for helping us improve!</p>
-              <p className="mt-2 text-sm leading-relaxed text-white/70">
+            <div className="rounded-xl border border-border bg-surface px-6 py-5 shadow-[var(--shadow-sm)]">
+              <p className="font-medium text-foreground">Thanks for helping us improve!</p>
+              <p className="mt-2 text-sm leading-relaxed text-foreground/80">
                 We&apos;ve received your suggestion. The more specific you are, the better we can train on what matters
                 to the circuit.
               </p>
               <button
                 type="button"
                 onClick={() => setStatus("idle")}
-                className="mt-4 text-sm font-medium text-accent transition-colors hover:text-white"
+                className="mt-4 text-sm font-medium text-accent transition-colors hover:text-foreground"
               >
                 Submit another suggestion
               </button>
@@ -89,7 +89,7 @@ export default function TrainingFeedback() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
-                <label htmlFor="training-area" className="block text-sm font-medium text-white/90">
+                <label htmlFor="training-area" className="block text-sm font-medium text-foreground">
                   What should we train on?
                 </label>
                 <textarea
@@ -98,14 +98,14 @@ export default function TrainingFeedback() {
                   onChange={(event) => setArea(event.target.value)}
                   rows={4}
                   placeholder="e.g. Kantian ethics, plan-inclusive counterplans, disclosure theory..."
-                  className="w-full resize-y rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm leading-relaxed text-white placeholder:text-white/35 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                  className="w-full resize-y rounded-xl border border-border bg-surface px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                   disabled={status === "submitting"}
                 />
               </div>
 
               <div className="space-y-2">
-                <span className="block text-sm font-medium text-white/90">Supporting file (optional)</span>
-                <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-white/20 bg-white/5 px-4 py-6 text-center transition-colors hover:border-accent/50 hover:bg-white/[0.07]">
+                <span className="block text-sm font-medium text-foreground">Supporting file (optional)</span>
+                <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface px-4 py-6 text-center shadow-[var(--shadow-sm)] transition-colors hover:border-accent/50 hover:bg-surface-hover">
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -114,15 +114,15 @@ export default function TrainingFeedback() {
                     disabled={status === "submitting"}
                     onChange={(event) => setFileName(event.target.files?.[0]?.name ?? null)}
                   />
-                  <span className="text-sm text-white/80">
+                  <span className="text-sm text-foreground/80">
                     {fileName ? fileName : "Click to attach a brief, card file, or notes"}
                   </span>
-                  <span className="mt-1 text-xs text-white/45">PDF, TXT, MD, DOC</span>
+                  <span className="mt-1 text-xs text-muted">PDF, TXT, MD, DOC</span>
                 </label>
               </div>
 
               {status === "error" && errorMessage ? (
-                <p className="text-sm text-red-300" role="alert">
+                <p className="text-sm text-red-600 dark:text-red-400" role="alert">
                   {errorMessage}
                 </p>
               ) : null}
@@ -130,7 +130,7 @@ export default function TrainingFeedback() {
               <button
                 type="submit"
                 disabled={status === "submitting"}
-                className="rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg bg-foreground px-5 py-2.5 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {status === "submitting" ? "Sending..." : "Submit feedback"}
               </button>

@@ -163,6 +163,8 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <TrainingFeedback />
+
       <section className="bg-[#1a2332] text-white">
         <div className="mx-auto grid w-full max-w-6xl gap-14 px-6 py-16 md:grid-cols-2 md:gap-10">
           {valueProps.map((section) => (
@@ -176,8 +178,6 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
-
-      <TrainingFeedback />
 
       <footer className="bg-[#0f1722] text-white/70">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-8 px-6 py-10 sm:flex-row sm:items-center">

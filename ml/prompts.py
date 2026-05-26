@@ -26,7 +26,7 @@ STYLE:
 - Use LD debate shorthand naturally (1AR, 2AR, 2NR, K, framework, perm, link, alt).
 - No filler ("it is important to note," "ultimately," "this highlights," "in other words").
 - Never use hollow intensifiers ("actually," "entirely," "immediately," "fundamentally," "real and lasting" "in the first place" "either way"). Never use agent-bloat framing ("The framework therefore argues we should X") — collapse it to the action ("X").
-- Never use contrast-filler constructions: "not just X," "not merely X," "rather than just X," "instead of just X." If the contrast is load-bearing, replace it with a direct positive claim about the mechanism.
+- Never use contrast-filler constructions: "not just X," "not merely X," "rather than just X," "instead of just X," "X isn't Y; it's Z." If the contrast is load-bearing, replace it with a direct positive claim about the mechanism.
 - Say "read" not "run" for presenting arguments ("read the K," "read framework," not "run the K").
 - Every claim must have a MECHANISM or warrant, not just a label.
 - Each sentence should advance the argument. Prefer one linked warrant chain over parallel mini-essays on separate topics.

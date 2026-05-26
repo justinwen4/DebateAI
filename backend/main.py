@@ -11,7 +11,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
 )
-from fastapi import Depends, FastAPI, Header, HTTPException, Query
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from pydantic import BaseModel, Field
@@ -80,7 +80,7 @@ async def generate(req: GenerateRequest):
         rag_query_parts.append(req.prompt)
         rag_query = "\n".join(rag_query_parts)
 
-        context = await retrieve(rag_query)
+        context = await retrieve(rag_query, slot_query=req.prompt)
         output = await generate_response(req.prompt, context=context, history=valid_history)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Generation failed: {e}")
@@ -119,6 +119,28 @@ async def admin_metrics(
         return fetch_product_metrics(_get_supabase(), days=days)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch metrics: {e}")
+
+
+@app.post("/training-request")
+async def training_request(
+    area: str = Form(...),
+    file: UploadFile | None = File(default=None),
+):
+    area = area.strip()
+    if not area:
+        raise HTTPException(status_code=400, detail="Area description is required")
+
+    payload: dict[str, str] = {"area": area}
+    if file and file.filename:
+        content = await file.read()
+        payload["file_name"] = file.filename
+        payload["file_content"] = content.decode("utf-8", errors="replace")
+
+    try:
+        _get_supabase().table("training_requests").insert(payload).execute()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save training request: {e}")
+    return {"status": "ok"}
 
 
 @app.post("/feedback")

@@ -192,17 +192,24 @@ def _filter_perm_slot_matches(query: str, rows: list[dict]) -> list[dict]:
     return rows[:1]
 
 
-def _retrieve_sync(query: str, n_results: int = 3, distance_threshold: float = 0.4) -> str:
+def _retrieve_sync(
+    query: str,
+    n_results: int = 3,
+    distance_threshold: float = 0.4,
+    slot_query: str | None = None,
+) -> str:
     """Return top-k debate examples relevant to the query.
 
     distance_threshold is converted to cosine similarity (similarity = 1 - distance).
+    slot_query: text used for perm slot parsing/filtering (defaults to query).
     """
     _reseed_if_changed()
 
+    slot_text = slot_query if slot_query is not None else query
     similarity_threshold = 1.0 - distance_threshold
     query_embedding = _embed(query)
-    query_slots = _parse_perm_slots(query)
-    fetch_count = max(n_results * 4, 10) if _perm_slot_filter_active(query, query_slots) else n_results
+    query_slots = _parse_perm_slots(slot_text)
+    fetch_count = max(n_results * 4, 10) if _perm_slot_filter_active(slot_text, query_slots) else n_results
 
     try:
         result = _get_supabase().rpc(
@@ -220,7 +227,7 @@ def _retrieve_sync(query: str, n_results: int = 3, distance_threshold: float = 0
     if not result.data:
         return ""
 
-    rows = _filter_perm_slot_matches(query, result.data)[:n_results]
+    rows = _filter_perm_slot_matches(slot_text, result.data)[:n_results]
 
     pairs = []
     for row in rows:
@@ -232,6 +239,11 @@ def _retrieve_sync(query: str, n_results: int = 3, distance_threshold: float = 0
     return "\n\n---\n\n".join(pairs)
 
 
-async def retrieve(query: str, n_results: int = 3, distance_threshold: float = 0.4) -> str:
+async def retrieve(
+    query: str,
+    n_results: int = 3,
+    distance_threshold: float = 0.4,
+    slot_query: str | None = None,
+) -> str:
     """Return top-k debate examples relevant to the query (non-blocking)."""
-    return await asyncio.to_thread(_retrieve_sync, query, n_results, distance_threshold)
+    return await asyncio.to_thread(_retrieve_sync, query, n_results, distance_threshold, slot_query)

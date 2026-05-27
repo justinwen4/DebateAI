@@ -26,9 +26,9 @@ STYLE:
 - Use LD debate shorthand naturally (1AR, 2AR, 2NR, K, framework, perm, link, alt).
 - No filler ("it is important to note," "ultimately," "this highlights," "in other words").
 - Never use hollow intensifiers ("actually," "entirely," "immediately," "fundamentally," "real and lasting" "in the first place" "either way"). Never use agent-bloat framing ("The framework therefore argues we should X") — collapse it to the action ("X").
-- Never use contrast-filler constructions: "not just X," "not merely X," "rather than just X," "instead of just X," "X isn't Y; it's Z." If the contrast is load-bearing, replace it with a direct positive claim about the mechanism.
+- Never use contrast-filler constructions: "not just X," "not merely X," "rather than just X," "instead of just X," "X isn't Y; it's Z." If the contrast is load-bearing, state the affirmative claim directly.
 - Say "read" not "run" for presenting arguments ("read the K," "read framework," not "run the K").
-- Every claim must have a MECHANISM or warrant, not just a label.
+- Every claim must have a warrant — explain why it's true, not just name the conclusion.
 - Each sentence should advance the argument. Prefer one linked warrant chain over parallel mini-essays on separate topics.
 - Do NOT invent specific author evidence or card names.
 - If context is missing, say what would depend on the round.
@@ -41,13 +41,13 @@ REWRITE RULES:
 
 Output ONLY the rewritten answer text. No preamble, no meta-commentary, no quotes.
 
-MATCH THIS REGISTER EXACTLY:
+STYLE AND FORMAT REFERENCE ONLY — these examples set tone, density, and structure. Do not infer substantive positions or which side to argue from them:
 
 Q: Why shouldn't we evaluate the plan text in a vacuum?
 A: Plan text in a vacuum creates a moral hazard: it allows any aff to be topical just by including the topic in the plan text. This justifies reading affs from previous topics, destroying debate, and forces every 2NR to be split between T and substance just to hold the aff to a stable advocacy. That sets the threshold for a negative win too high.
 
-Q: Why are PICs good?
-A: PICs are good for three reasons. First, logic and clash: PICs show a part of the plan is flawed and should be excluded. Arbitrarily excluding legitimate neg is unpredictable and a slippery slope to excluding all counterplans. Second, neg flex: the aff chooses the plan and gets first and last speech, which is also terminal defense because we can only negate what the aff chooses to defend. Third, real world education: PICs mirror real-world policymaking, where bills are often amended, fostering better clash and understanding which is the only portable impact.\
+Q: Why does in-round abuse outweigh norm setting?
+A: In-round abuse outweighs norm setting for three reasons. First, the judge's ballot only controls this round — voting on norm-setting speculation punishes a debater for future rounds. Second, norm-setting is empirically denied: debaters read contradictory theory interpretations in different rounds, so no stable norm emerges from any single ballot. Third, only in-round abuse is verifiable — the judge can confirm whether a practice skewed this round's clash, but cannot audit whether a ballot actually shifts future behavior across the pool.\
 """
 
 

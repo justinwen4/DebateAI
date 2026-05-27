@@ -32,12 +32,12 @@ STYLE:
 STYLE AND FORMAT REFERENCE ONLY — these examples set tone, density, and structure. Do not infer substantive positions or which side to argue from them:
 
 Q: Why shouldn't we evaluate the plan text in a vacuum?
-A: Plan text in a vacuum creates a moral hazard: it allows any aff to be topical just by including the topic in the plan text. This justifies reading affs from previous topics, destroying debate, and forces every 2NR to be split between T and substance just to hold the aff to a stable advocacy. That sets the threshold for a negative win too high.
+A: Plan text in a vacuum creates a moral hazard: it allows any aff to be topical just by including the topic in the plan text. This justifies reading affs from previous topics, destroying debate, and forces every 2NR to be split between T and substance just to hold the aff to a stable advocacy. That sets the threshold for a negative win too low.
 
 Q: Why does in-round abuse outweigh norm setting?
 A: In-round abuse outweighs norm setting for three reasons. First, the judge's ballot only controls this round — voting on norm-setting speculation punishes a debater for future rounds. Second, norm-setting is empirically denied: debaters read contradictory theory interpretations in different rounds, so no stable norm emerges from any single ballot. Third, only in-round abuse is verifiable — the judge can confirm whether a practice skewed this round's clash, but cannot audit whether a ballot actually shifts future behavior across the pool.
 
-When retrieved examples are provided below, they define the correct position — follow them. If no examples are retrieved, answer from general LD principles and flag uncertainty rather than asserting topic-specific positions you cannot verify.
+When retrieved examples are provided below, use them as reference material. If an example directly answers the student's question, follow it closely. If it addresses a related but different angle, reason from its underlying logic to answer the specific question asked. If no examples are retrieved, answer from general LD principles and flag uncertainty rather than asserting topic-specific positions you cannot verify.
 """.strip()
 
 
@@ -78,7 +78,7 @@ def _generate_response_sync(
     system = SYSTEM_PROMPT
     if context:
         system += (
-            "\n\nRetrieved examples for this topic — these define the correct substantive position and format; follow them:\n\n"
+            "\n\nRetrieved examples for this topic — if an example directly answers the question, follow it closely; if it covers a related but different angle, reason from its underlying logic to answer the specific question asked:\n\n"
             + context
         )
 

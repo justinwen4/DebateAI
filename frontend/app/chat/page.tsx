@@ -40,9 +40,24 @@ export default function ChatPage() {
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
   const [usageBanner, setUsageBanner] = useState<UsageBannerState | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { user, loading: authLoading, signOut } = useAuth();
+
+  useEffect(() => {
+    if (localStorage.getItem("chat-sidebar-collapsed") === "true") {
+      setSidebarCollapsed(true);
+    }
+  }, []);
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem("chat-sidebar-collapsed", String(next));
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -315,6 +330,8 @@ export default function ChatPage() {
   return (
     <div className="flex h-full">
       <Sidebar
+        collapsed={sidebarCollapsed}
+        onToggleCollapsed={toggleSidebar}
         onNewChat={() => {
           void handleNewChat();
         }}
@@ -331,6 +348,8 @@ export default function ChatPage() {
         signingOut={signingOut}
       />
       <ChatArea
+        sidebarCollapsed={sidebarCollapsed}
+        onToggleSidebar={toggleSidebar}
         messages={messages}
         input={input}
         setInput={setInput}

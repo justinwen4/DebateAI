@@ -105,16 +105,9 @@ export default function FounderPage() {
                     {contributor.name}
                   </h2>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {contributor.stats.map((stat) => (
-                    <div
-                      key={stat}
-                      className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white/90"
-                    >
-                      {stat}
-                    </div>
-                  ))}
-                </div>
+                <p className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium leading-relaxed text-white/90">
+                  {contributor.stats.join(" · ")}
+                </p>
               </article>
             ))}
           </div>

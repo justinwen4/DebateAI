@@ -68,12 +68,12 @@ export default function TrainingFeedback() {
     <section className="border-y border-border-subtle bg-surface/60">
       <div className="mx-auto w-full max-w-6xl px-6 py-16">
         <div className="mx-auto max-w-2xl space-y-8">
-          <div className="space-y-3 border-l-2 border-accent pl-6">
+          <div className="space-y-2 border-l-2 border-accent pl-6">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-accent">Improve DebateAI</p>
-            <h3 className="font-[family-name:var(--font-display)] text-4xl leading-[0.95] tracking-tight text-foreground sm:text-5xl">
+            <h3 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
               Help us train smarter
             </h3>
-            <p className="text-[1.05rem] leading-relaxed text-foreground/80 sm:text-[1.15rem]">
+            <p className="text-sm leading-relaxed text-foreground/80">
               Got a topic you wish DebateAI knew better? Tell us what areas you&apos;d like to see more training on — or
               drop a file with examples — and we&apos;ll use it to improve future updates.
             </p>

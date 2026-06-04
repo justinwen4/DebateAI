@@ -108,9 +108,12 @@ export default function TrainingFeedback() {
               </Link>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-2">
-                <label htmlFor="training-area" className="block text-sm font-medium text-foreground">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-3">
+                <label
+                  htmlFor="training-area"
+                  className="block text-[1.05rem] font-medium leading-relaxed text-foreground sm:text-[1.15rem]"
+                >
                   What should we train on?
                 </label>
                 <textarea
@@ -119,14 +122,16 @@ export default function TrainingFeedback() {
                   onChange={(event) => setArea(event.target.value)}
                   rows={4}
                   placeholder="e.g. Kantian ethics, plan-inclusive counterplans, disclosure theory..."
-                  className="w-full resize-y rounded-xl border border-border bg-surface px-4 py-3 text-sm leading-relaxed text-foreground placeholder:text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                  className="w-full resize-y rounded-xl border border-border bg-surface px-4 py-4 text-[1.05rem] leading-relaxed text-foreground placeholder:text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent sm:text-[1.15rem]"
                   disabled={status === "submitting"}
                 />
               </div>
 
-              <div className="space-y-2">
-                <span className="block text-sm font-medium text-foreground">Supporting file (optional)</span>
-                <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface px-4 py-6 text-center shadow-[var(--shadow-sm)] transition-colors hover:border-accent/50 hover:bg-surface-hover">
+              <div className="space-y-3">
+                <span className="block text-[1.05rem] font-medium leading-relaxed text-foreground sm:text-[1.15rem]">
+                  Supporting file (optional)
+                </span>
+                <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface px-4 py-7 text-center shadow-[var(--shadow-sm)] transition-colors hover:border-accent/50 hover:bg-surface-hover">
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -135,15 +140,15 @@ export default function TrainingFeedback() {
                     disabled={status === "submitting"}
                     onChange={(event) => setFileName(event.target.files?.[0]?.name ?? null)}
                   />
-                  <span className="text-sm text-foreground/80">
+                  <span className="text-[1.05rem] leading-relaxed text-foreground/80 sm:text-[1.15rem]">
                     {fileName ? fileName : "Click to attach a brief, card file, or notes"}
                   </span>
-                  <span className="mt-1 text-xs text-muted">PDF, TXT, MD, DOC</span>
+                  <span className="mt-1.5 text-sm text-muted">PDF, TXT, MD, DOC</span>
                 </label>
               </div>
 
               {status === "error" && errorMessage ? (
-                <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+                <p className="text-[1.05rem] leading-relaxed text-red-600 dark:text-red-400 sm:text-[1.15rem]" role="alert">
                   {errorMessage}
                 </p>
               ) : null}
@@ -151,7 +156,7 @@ export default function TrainingFeedback() {
               <button
                 type="submit"
                 disabled={status === "submitting"}
-                className="rounded-lg bg-foreground px-5 py-2.5 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-xl bg-foreground px-6 py-3 text-base font-semibold text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {status === "submitting" ? "Sending..." : "Submit feedback"}
               </button>

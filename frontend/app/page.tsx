@@ -172,12 +172,12 @@ export default function LandingPage() {
       <section className="border-y border-border-subtle bg-background">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-6 px-6 py-12 sm:flex-row sm:items-center">
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-accent">Built by the circuit</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-accent">Built by Top Debaters</p>
             <h2 className="font-[family-name:var(--font-display)] text-3xl leading-tight tracking-tight text-foreground sm:text-4xl">
               Justin Wen
             </h2>
             <p className="max-w-xl text-lg leading-relaxed text-foreground/80">
-              TOC finalist, two-time TFA champion, and the primary creator behind DebateAI.
+              TOC finalist, 2x TFA champion, and the creator behind DebateAI.
             </p>
           </div>
           <Link

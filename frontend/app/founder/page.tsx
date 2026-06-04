@@ -2,11 +2,22 @@ import Image from "next/image";
 import Link from "next/link";
 import { LogoWithLabel } from "@/app/components/Logo";
 
-const stats = [
+const founderStats = [
   { label: "TOC Finalist" },
   { label: "2× TFA Champion" },
   { label: "33 Bids" },
   { label: "12 Bid Tournaments Championed/Finalled" },
+];
+
+const contributors = [
+  {
+    name: "Miller Roberts",
+    stats: ["Emory Finalist", "TOC Quarterfinalist", "Bid Leader"],
+  },
+  {
+    name: "Aiden Etkin",
+    stats: ["Coach of TOC Champion", "Coach of TOC Finalist", "Coach of TOC Semi-Finalist"],
+  },
 ];
 
 export default function FounderPage() {
@@ -39,7 +50,8 @@ export default function FounderPage() {
       </header>
 
       <section className="bg-[#1a2332] text-white">
-        <div className="mx-auto grid w-full max-w-6xl gap-12 px-6 py-16 md:grid-cols-[minmax(0,16rem)_1fr] md:items-start md:gap-14 md:py-20">
+        <div className="mx-auto w-full max-w-6xl space-y-16 px-6 py-16 md:space-y-20 md:py-20">
+        <div className="grid w-full gap-12 md:grid-cols-[minmax(0,16rem)_1fr] md:items-start md:gap-14">
           <div className="mx-auto w-64 shrink-0 overflow-hidden rounded-2xl md:mx-0">
             <Image
               src="/justin-wen.jpg"
@@ -64,7 +76,7 @@ export default function FounderPage() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              {stats.map((stat) => (
+              {founderStats.map((stat) => (
                 <div
                   key={stat.label}
                   className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white/90"
@@ -80,13 +92,40 @@ export default function FounderPage() {
               championed or finalled 12 bid tournaments.
             </p>
 
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1 text-sm font-medium text-accent transition-colors hover:text-white"
-            >
-              ← Back to DebateAI
-            </Link>
           </div>
+        </div>
+
+        <div className="border-t border-white/10 pt-16 md:pt-20">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-accent">Contributors</p>
+          <div className="mt-10 grid gap-12 md:grid-cols-2 md:gap-14">
+            {contributors.map((contributor) => (
+              <article key={contributor.name} className="space-y-5">
+                <div className="space-y-3 border-l-2 border-accent pl-6">
+                  <h2 className="font-[family-name:var(--font-display)] text-3xl leading-tight tracking-tight text-white sm:text-4xl">
+                    {contributor.name}
+                  </h2>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {contributor.stats.map((stat) => (
+                    <div
+                      key={stat}
+                      className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white/90"
+                    >
+                      {stat}
+                    </div>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1 text-sm font-medium text-accent transition-colors hover:text-white"
+        >
+          ← Back to DebateAI
+        </Link>
         </div>
       </section>
     </main>

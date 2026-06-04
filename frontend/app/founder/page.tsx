@@ -16,7 +16,7 @@ const contributors = [
   },
   {
     name: "Aidan Etkin",
-    stats: ["Coach of TOC Champion", "Coach of TOC Finalist", "Coach of TOC Semi-Finalist"],
+    stats: ["Coach of TOC Champion", "TOC Finalist", "TOC Semi-Finalist"],
   },
 ];
 

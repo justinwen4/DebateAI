@@ -169,20 +169,20 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="bg-[#1a2332] text-white">
+      <section className="border-y border-border-subtle bg-background">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-6 px-6 py-12 sm:flex-row sm:items-center">
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-accent">Built by the circuit</p>
-            <h2 className="font-[family-name:var(--font-display)] text-3xl leading-tight tracking-tight text-white sm:text-4xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-accent">Built by the circuit</p>
+            <h2 className="font-[family-name:var(--font-display)] text-3xl leading-tight tracking-tight text-foreground sm:text-4xl">
               Justin Wen
             </h2>
-            <p className="max-w-xl text-[1.05rem] leading-relaxed text-white/70 sm:text-[1.15rem]">
+            <p className="max-w-xl text-lg leading-relaxed text-foreground/80">
               TOC finalist, two-time TFA champion, and the primary creator behind DebateAI.
             </p>
           </div>
           <Link
             href="/founder"
-            className="shrink-0 rounded-xl border border-white/20 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:border-white/40 hover:bg-white/5"
+            className="shrink-0 rounded-xl border border-border bg-surface px-5 py-2.5 text-sm font-semibold text-foreground shadow-[var(--shadow-sm)] transition-colors hover:border-accent/40 hover:bg-surface-hover"
           >
             Meet the founder &rarr;
           </Link>

@@ -57,9 +57,10 @@ export default function FounderPage() {
               <h1 className="font-[family-name:var(--font-display)] text-4xl leading-[0.95] tracking-tight text-white sm:text-5xl">
                 Justin Wen
               </h1>
-              <p className="text-[1.05rem] leading-relaxed text-white/70 sm:text-[1.15rem]">
-                Strake Jesuit · Lincoln-Douglas
-              </p>
+              <div className="space-y-0.5 text-[1.05rem] leading-relaxed text-white/70 sm:text-[1.15rem]">
+                <p>Strake Jesuit</p>
+                <p>Duke University.</p>
+              </div>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">

@@ -149,11 +149,10 @@ export default function ChatPage() {
     );
   }, []);
 
-  const send = useCallback(
-    async (e: FormEvent) => {
-      e.preventDefault();
-      const text = input.trim();
-      if (!text || loading || !user) return;
+  const sendMessage = useCallback(
+    async (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed || loading || !user) return;
 
       let conversationId = activeConversationId;
       if (!conversationId) {
@@ -162,7 +161,7 @@ export default function ChatPage() {
 
       const history = messages.map((m) => ({ role: m.role, content: m.content }));
       const hasUserMessage = messages.some((m) => m.role === "user");
-      const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: text };
+      const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: trimmed };
       setMessages((prev) => [...prev, userMsg]);
       setInput("");
       setLoading(true);
@@ -170,11 +169,11 @@ export default function ChatPage() {
       await supabase.from("messages").insert({
         conversation_id: conversationId,
         role: "user",
-        content: text,
+        content: trimmed,
       });
 
       if (!hasUserMessage) {
-        const title = buildConversationTitle(text);
+        const title = buildConversationTitle(trimmed);
         await supabase.from("conversations").update({ title }).eq("id", conversationId);
         setConversations((prev) =>
           prev.map((conversation) => (conversation.id === conversationId ? { ...conversation, title } : conversation)),
@@ -185,7 +184,7 @@ export default function ChatPage() {
         const res = await apiFetch("/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: text, history }),
+          body: JSON.stringify({ prompt: trimmed, history }),
         });
 
         if (!res.ok) {
@@ -235,7 +234,15 @@ export default function ChatPage() {
         setLoading(false);
       }
     },
-    [activeConversationId, createConversation, input, loading, messages, touchConversation, user],
+    [activeConversationId, createConversation, loading, messages, touchConversation, user],
+  );
+
+  const send = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault();
+      await sendMessage(input);
+    },
+    [input, sendMessage],
   );
 
   const handleFeedback = useCallback(
@@ -354,6 +361,7 @@ export default function ChatPage() {
         input={input}
         setInput={setInput}
         onSend={send}
+        onSendMessage={sendMessage}
         onFeedback={handleFeedback}
         loading={loading}
         scrollRef={scrollRef}

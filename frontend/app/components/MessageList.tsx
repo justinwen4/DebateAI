@@ -148,7 +148,7 @@ export default function MessageList({ messages, loading, scrollRef, onFeedback }
             <Logo size={36} className="rounded-lg" />
           </div>
           <p className="text-sm text-foreground/80 font-medium mb-1">Start a conversation</p>
-          <p className="text-[13px] text-muted">Ask a debate question to get started.</p>
+          <p className="text-[13px] text-muted">Pick a question below or type your own.</p>
         </div>
       </div>
     );

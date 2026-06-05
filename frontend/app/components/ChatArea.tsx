@@ -3,6 +3,7 @@
 import { FormEvent, RefObject } from "react";
 import MessageList, { Message } from "./MessageList";
 import InputBar from "./InputBar";
+import StarterQuestions from "./StarterQuestions";
 import ThemeToggle from "./ThemeToggle";
 import { SidebarToggleButton } from "./Sidebar";
 import { buildConversationTitle } from "@/app/lib/conversationTitle";
@@ -21,6 +22,7 @@ interface ChatAreaProps {
   input: string;
   setInput: (value: string) => void;
   onSend: (e: FormEvent) => void;
+  onSendMessage: (text: string) => void;
   onFeedback: (messageId: string, rating: number, notes: string) => Promise<void>;
   loading: boolean;
   scrollRef: RefObject<HTMLDivElement | null>;
@@ -35,6 +37,7 @@ export default function ChatArea({
   input,
   setInput,
   onSend,
+  onSendMessage,
   onFeedback,
   loading,
   scrollRef,
@@ -83,6 +86,9 @@ export default function ChatArea({
       ) : null}
 
       <MessageList messages={messages} loading={loading} scrollRef={scrollRef} onFeedback={onFeedback} />
+      {messages.length === 0 ? (
+        <StarterQuestions onSelect={onSendMessage} disabled={loading} />
+      ) : null}
       <InputBar input={input} setInput={setInput} onSend={onSend} loading={loading} />
     </main>
   );

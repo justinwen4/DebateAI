@@ -20,6 +20,10 @@ TRAINING_DAILY_LIMIT = int(os.environ.get("TRAINING_DAILY_LIMIT", "5"))
 SONNET_MONTHLY_LIMIT = int(os.environ.get("SONNET_MONTHLY_LIMIT", "30"))
 PREMIUM_MODEL = os.environ.get("PREMIUM_MODEL", "claude-sonnet-4-6")
 STANDARD_MODEL = os.environ.get("STANDARD_MODEL", "claude-haiku-4-5")
+TITLE_MODEL = os.environ.get("TITLE_MODEL", "claude-haiku-4-5")
+
+MAX_TITLE_CHARS = int(os.environ.get("MAX_TITLE_CHARS", "120"))
+TITLE_DAILY_LIMIT = int(os.environ.get("TITLE_DAILY_LIMIT", "100"))
 
 DOWNGRADE_NOTICE = (
     "You've used your {limit} premium responses this month. "

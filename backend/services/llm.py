@@ -3,7 +3,7 @@ import os
 
 from anthropic import Anthropic
 
-from services.limits import PREMIUM_MODEL
+from services.limits import PREMIUM_MODEL, TITLE_MODEL, MAX_TITLE_CHARS
 
 client: Anthropic | None = None
 MAX_HISTORY_TURNS = 8
@@ -104,3 +104,57 @@ async def generate_response(
 ) -> str:
     """Generate a tutor-style response (non-blocking)."""
     return await asyncio.to_thread(_generate_response_sync, prompt, context, history, model)
+
+
+TITLE_SYSTEM_PROMPT = """Generate a concise chat title for a Lincoln-Douglas debate tutoring session.
+
+Rules:
+- 3 to 6 words
+- Noun-phrase style topic label, not a question
+- No trailing punctuation
+- No quotes, brackets, or emojis
+- Output only the title"""
+
+
+def _sanitize_generated_title(raw: str, fallback: str) -> str:
+    title = raw.strip().strip("\"'")
+    title = title.rstrip(".!?")
+    title = " ".join(title.split())
+    if not title:
+        return fallback
+    if len(title) > MAX_TITLE_CHARS:
+        title = title[:MAX_TITLE_CHARS].rstrip()
+    return title
+
+
+def _generate_title_sync(
+    user_message: str,
+    assistant_message: str,
+    fallback: str,
+    model: str = TITLE_MODEL,
+) -> str:
+    user_content = (
+        f'User asked: "{user_message[:500]}"\n'
+        f'Assistant replied: "{assistant_message[:500]}"'
+    )
+    msg = _get_client().messages.create(
+        model=model,
+        system=TITLE_SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": user_content}],
+        temperature=0.3,
+        max_tokens=20,
+    )
+    parts = [block.text for block in msg.content if block.type == "text"]
+    return _sanitize_generated_title("".join(parts), fallback)
+
+
+async def generate_title(
+    user_message: str,
+    assistant_message: str,
+    fallback: str,
+    model: str = TITLE_MODEL,
+) -> str:
+    """Generate a short conversation title (non-blocking)."""
+    return await asyncio.to_thread(
+        _generate_title_sync, user_message, assistant_message, fallback, model
+    )

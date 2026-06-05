@@ -2,10 +2,12 @@
 
 import { useMemo } from "react";
 import { LogoWithLabel } from "@/app/components/Logo";
+import EditableTitle from "@/app/components/EditableTitle";
 
-interface ConversationSummary {
+export interface ConversationSummary {
   id: string;
   title: string;
+  title_locked: boolean;
   updated_at: string;
 }
 
@@ -16,6 +18,7 @@ interface SidebarProps {
   conversations: ConversationSummary[];
   activeConversationId: string | null;
   onSelectConversation: (conversationId: string) => void;
+  onRenameConversation: (conversationId: string, title: string) => void | Promise<void>;
   onDeleteConversation: (conversationId: string) => void;
   userEmail?: string;
   onSignOut: () => Promise<void>;
@@ -86,6 +89,7 @@ export default function Sidebar({
   conversations,
   activeConversationId,
   onSelectConversation,
+  onRenameConversation,
   onDeleteConversation,
   userEmail,
   onSignOut,
@@ -143,14 +147,28 @@ export default function Sidebar({
                     : "border-transparent bg-transparent hover:border-border-subtle hover:bg-surface-hover/70"
                 }`}
               >
-                <button
-                  type="button"
+                <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => onSelectConversation(conversation.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onSelectConversation(conversation.id);
+                    }
+                  }}
                   className="w-full rounded-lg px-3 py-2 pr-9 text-left cursor-pointer"
                 >
-                  <p className="truncate text-[13px] font-medium text-foreground">{conversation.title}</p>
+                  <EditableTitle
+                    value={conversation.title}
+                    onSave={(title) => onRenameConversation(conversation.id, title)}
+                    onActivate={() => onSelectConversation(conversation.id)}
+                    editTrigger="doubleClick"
+                    className="text-[13px] font-medium text-foreground hover:text-foreground/80"
+                    inputClassName="text-[13px] font-medium"
+                  />
                   <p className="mt-0.5 text-[11px] text-muted">{formatRelativeTime(conversation.updated_at)}</p>
-                </button>
+                </div>
                 <button
                   type="button"
                   aria-label={`Delete ${conversation.title}`}

@@ -1,21 +1,15 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import Sidebar from "@/app/components/Sidebar";
+import Sidebar, { ConversationSummary } from "@/app/components/Sidebar";
 import ChatArea from "@/app/components/ChatArea";
 import { Message } from "@/app/components/MessageList";
 import { useAuth } from "@/app/context/AuthContext";
 import { supabase } from "@/app/lib/supabase";
-import { buildConversationTitle } from "@/app/lib/conversationTitle";
+import { DEFAULT_CONVERSATION_TITLE, provisionalConversationTitle } from "@/app/lib/conversationTitle";
 import { apiFetch } from "@/app/lib/api";
 import type { UsageBannerState } from "@/app/components/ChatArea";
-
-interface ConversationSummary {
-  id: string;
-  title: string;
-  updated_at: string;
-}
 
 interface DatabaseMessage {
   id: string;
@@ -31,6 +25,10 @@ interface GenerateApiResponse {
   notice: string | null;
 }
 
+interface TitleApiResponse {
+  title: string;
+}
+
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -42,8 +40,13 @@ export default function ChatPage() {
   const [usageBanner, setUsageBanner] = useState<UsageBannerState | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const conversationsRef = useRef(conversations);
   const router = useRouter();
   const { user, loading: authLoading, signOut } = useAuth();
+
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
 
   useEffect(() => {
     if (localStorage.getItem("chat-sidebar-collapsed") === "true") {
@@ -91,7 +94,7 @@ export default function ChatPage() {
     setLoadingConversations(true);
     const { data, error } = await supabase
       .from("conversations")
-      .select("id, title, updated_at")
+      .select("id, title, title_locked, updated_at")
       .eq("user_id", user.id)
       .order("updated_at", { ascending: false });
 
@@ -119,10 +122,11 @@ export default function ChatPage() {
       .from("conversations")
       .insert({
         user_id: user.id,
-        title: "New conversation",
+        title: DEFAULT_CONVERSATION_TITLE,
+        title_locked: false,
         updated_at: new Date().toISOString(),
       })
-      .select("id, title, updated_at")
+      .select("id, title, title_locked, updated_at")
       .single();
 
     if (error || !data) throw error ?? new Error("Failed to create conversation");
@@ -149,6 +153,72 @@ export default function ChatPage() {
     );
   }, []);
 
+  const updateConversationTitle = useCallback(
+    (conversationId: string, title: string, titleLocked?: boolean) => {
+      setConversations((prev) =>
+        prev.map((conversation) =>
+          conversation.id === conversationId
+            ? {
+                ...conversation,
+                title,
+                ...(titleLocked === undefined ? {} : { title_locked: titleLocked }),
+              }
+            : conversation,
+        ),
+      );
+    },
+    [],
+  );
+
+  const handleRenameConversation = useCallback(
+    async (conversationId: string, title: string) => {
+      const { error } = await supabase
+        .from("conversations")
+        .update({ title, title_locked: true })
+        .eq("id", conversationId);
+
+      if (error) return;
+      updateConversationTitle(conversationId, title, true);
+    },
+    [updateConversationTitle],
+  );
+
+  const generateConversationTitle = useCallback(
+    async (conversationId: string, userMessage: string, assistantMessage: string) => {
+      const conversation = conversationsRef.current.find((item) => item.id === conversationId);
+      if (!conversation || conversation.title_locked) return;
+
+      try {
+        const res = await apiFetch("/generate-title", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_message: userMessage,
+            assistant_message: assistantMessage,
+          }),
+        });
+
+        if (!res.ok) return;
+
+        const data = (await res.json()) as TitleApiResponse;
+        const latest = conversationsRef.current.find((item) => item.id === conversationId);
+        if (!latest || latest.title_locked) return;
+
+        const { error } = await supabase
+          .from("conversations")
+          .update({ title: data.title })
+          .eq("id", conversationId)
+          .eq("title_locked", false);
+
+        if (error) return;
+        updateConversationTitle(conversationId, data.title);
+      } catch {
+        // Keep the provisional title if generation fails.
+      }
+    },
+    [updateConversationTitle],
+  );
+
   const sendMessage = useCallback(
     async (text: string) => {
       const trimmed = text.trim();
@@ -160,7 +230,7 @@ export default function ChatPage() {
       }
 
       const history = messages.map((m) => ({ role: m.role, content: m.content }));
-      const hasUserMessage = messages.some((m) => m.role === "user");
+      const isFirstExchange = !messages.some((m) => m.role === "user");
       const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: trimmed };
       setMessages((prev) => [...prev, userMsg]);
       setInput("");
@@ -172,12 +242,10 @@ export default function ChatPage() {
         content: trimmed,
       });
 
-      if (!hasUserMessage) {
-        const title = buildConversationTitle(trimmed);
-        await supabase.from("conversations").update({ title }).eq("id", conversationId);
-        setConversations((prev) =>
-          prev.map((conversation) => (conversation.id === conversationId ? { ...conversation, title } : conversation)),
-        );
+      if (isFirstExchange) {
+        const title = provisionalConversationTitle(trimmed);
+        await supabase.from("conversations").update({ title }).eq("id", conversationId).eq("title_locked", false);
+        updateConversationTitle(conversationId, title);
       }
 
       try {
@@ -213,6 +281,10 @@ export default function ChatPage() {
           role: "assistant",
           content: botText,
         });
+
+        if (isFirstExchange) {
+          void generateConversationTitle(conversationId, trimmed, botText);
+        }
       } catch (err) {
         const fallbackText =
           err instanceof Error && err.message.includes("Daily limit")
@@ -234,7 +306,16 @@ export default function ChatPage() {
         setLoading(false);
       }
     },
-    [activeConversationId, createConversation, loading, messages, touchConversation, user],
+    [
+      activeConversationId,
+      createConversation,
+      generateConversationTitle,
+      loading,
+      messages,
+      touchConversation,
+      updateConversationTitle,
+      user,
+    ],
   );
 
   const send = useCallback(
@@ -324,6 +405,11 @@ export default function ChatPage() {
     }
   }, [router, signOut, signingOut]);
 
+  const activeConversation = useMemo(
+    () => conversations.find((conversation) => conversation.id === activeConversationId) ?? null,
+    [activeConversationId, conversations],
+  );
+
   if (authLoading || loadingConversations || !user) {
     return (
       <main className="h-full grid place-items-center bg-background px-6">
@@ -347,6 +433,7 @@ export default function ChatPage() {
         onSelectConversation={(conversationId) => {
           void handleSelectConversation(conversationId);
         }}
+        onRenameConversation={handleRenameConversation}
         onDeleteConversation={(conversationId) => {
           void handleDeleteConversation(conversationId);
         }}
@@ -357,6 +444,12 @@ export default function ChatPage() {
       <ChatArea
         sidebarCollapsed={sidebarCollapsed}
         onToggleSidebar={toggleSidebar}
+        conversationTitle={activeConversation?.title ?? DEFAULT_CONVERSATION_TITLE}
+        canRenameTitle={Boolean(activeConversationId)}
+        onRenameTitle={(title) => {
+          if (!activeConversationId) return;
+          void handleRenameConversation(activeConversationId, title);
+        }}
         messages={messages}
         input={input}
         setInput={setInput}

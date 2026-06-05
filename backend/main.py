@@ -33,11 +33,13 @@ from services.limits import (
     MAX_TRAINING_AREA_CHARS,
     MAX_TRAINING_FILE_BYTES,
     SONNET_MONTHLY_LIMIT,
+    TITLE_DAILY_LIMIT,
     TRAINING_DAILY_LIMIT,
+    MAX_TITLE_CHARS,
     enforce_rate_limit,
     validate_history,
 )
-from services.llm import generate_response
+from services.llm import generate_response, generate_title
 from services.metrics import fetch_product_metrics, is_admin_configured, verify_admin_key
 from services.rag import retrieve, seed_from_dataset
 from services.usage import get_monthly_count, pick_model_for_generation, record_generation
@@ -152,6 +154,36 @@ async def generate(
         premium_monthly_limit=SONNET_MONTHLY_LIMIT,
         notice=notice,
     )
+
+
+class TitleRequest(BaseModel):
+    user_message: str = Field(..., min_length=1, max_length=500)
+    assistant_message: str = Field(..., min_length=1, max_length=500)
+
+
+class TitleResponse(BaseModel):
+    title: str
+
+
+@app.post("/generate-title", response_model=TitleResponse)
+@limiter.limit("200/hour")
+async def generate_conversation_title(
+    request: Request,
+    req: TitleRequest,
+    user: AuthUser = Depends(require_user),
+):
+    enforce_rate_limit(user.id, "generate_title", TITLE_DAILY_LIMIT)
+    fallback = req.user_message.strip()[:MAX_TITLE_CHARS]
+    try:
+        title = await generate_title(
+            req.user_message.strip(),
+            req.assistant_message.strip(),
+            fallback=fallback,
+        )
+    except Exception:
+        logger.exception("generate-title failed user=%s", user.id)
+        title = fallback
+    return TitleResponse(title=title)
 
 
 class FeedbackRequest(BaseModel):

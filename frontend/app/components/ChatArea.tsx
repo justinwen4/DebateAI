@@ -6,7 +6,8 @@ import InputBar from "./InputBar";
 import StarterQuestions from "./StarterQuestions";
 import ThemeToggle from "./ThemeToggle";
 import { SidebarToggleButton } from "./Sidebar";
-import { buildConversationTitle } from "@/app/lib/conversationTitle";
+import EditableTitle from "./EditableTitle";
+import { DEFAULT_CONVERSATION_TITLE } from "@/app/lib/conversationTitle";
 
 export interface UsageBannerState {
   message: string;
@@ -18,6 +19,9 @@ export interface UsageBannerState {
 interface ChatAreaProps {
   sidebarCollapsed: boolean;
   onToggleSidebar: () => void;
+  conversationTitle: string;
+  canRenameTitle: boolean;
+  onRenameTitle: (title: string) => void | Promise<void>;
   messages: Message[];
   input: string;
   setInput: (value: string) => void;
@@ -33,6 +37,9 @@ interface ChatAreaProps {
 export default function ChatArea({
   sidebarCollapsed,
   onToggleSidebar,
+  conversationTitle,
+  canRenameTitle,
+  onRenameTitle,
   messages,
   input,
   setInput,
@@ -44,9 +51,6 @@ export default function ChatArea({
   usageBanner,
   onDismissUsageBanner,
 }: ChatAreaProps) {
-  const firstUserMsg = messages.find((m) => m.role === "user");
-  const title = firstUserMsg ? buildConversationTitle(firstUserMsg.content) : "New conversation";
-
   return (
     <main className="flex-1 flex flex-col min-w-0 bg-background">
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-md shrink-0 border-b border-border-subtle/50">
@@ -60,9 +64,14 @@ export default function ChatArea({
                 className="-ml-1 shrink-0"
               />
             ) : null}
-            <h2 className="min-w-0 flex-1 text-[15px] font-medium text-foreground tracking-tight truncate">
-              {title}
-            </h2>
+            <EditableTitle
+              value={conversationTitle || DEFAULT_CONVERSATION_TITLE}
+              onSave={onRenameTitle}
+              disabled={!canRenameTitle}
+              editTrigger="click"
+              className="min-w-0 flex-1 text-[15px] font-medium text-foreground tracking-tight hover:text-foreground/80"
+              inputClassName="text-[15px] font-medium tracking-tight"
+            />
           </div>
           <ThemeToggle />
         </div>

@@ -10,7 +10,8 @@ import { supabase } from "@/app/lib/supabase";
 import { DEFAULT_CONVERSATION_TITLE, provisionalConversationTitle } from "@/app/lib/conversationTitle";
 import { apiFetch } from "@/app/lib/api";
 import { streamGenerate } from "@/app/lib/streamGenerate";
-import { createFrameBatcher } from "@/app/lib/batchedStream";
+import { createScrollScheduler } from "@/app/lib/scrollToBottom";
+import { createSmoothStreamReveal } from "@/app/lib/smoothStreamReveal";
 import type { UsageBannerState } from "@/app/components/ChatArea";
 
 interface DatabaseMessage {
@@ -43,6 +44,7 @@ export default function ChatPage() {
   const [usageBanner, setUsageBanner] = useState<UsageBannerState | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollSchedulerRef = useRef(createScrollScheduler(() => scrollRef.current));
   const conversationsRef = useRef(conversations);
   const router = useRouter();
   const { user, loading: authLoading, signOut } = useAuth();
@@ -72,11 +74,12 @@ export default function ChatPage() {
   }, [authLoading, router, user]);
 
   useEffect(() => {
+    if (streamingMessageId) return;
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTo({
       top: el.scrollHeight,
-      behavior: streamingMessageId ? "auto" : "smooth",
+      behavior: "smooth",
     });
   }, [messages, loading, streamingMessageId]);
 
@@ -258,7 +261,6 @@ export default function ChatPage() {
       }
 
       const botId = crypto.randomUUID();
-      let botText = "";
       let streamStarted = false;
 
       const syncBotMessage = (text: string) => {
@@ -268,27 +270,25 @@ export default function ChatPage() {
           }
           return prev.map((message) => (message.id === botId ? { ...message, content: text } : message));
         });
+        scrollSchedulerRef.current.schedule();
       };
 
-      const batcher = createFrameBatcher(() => syncBotMessage(botText));
+      const reveal = createSmoothStreamReveal(syncBotMessage);
 
       try {
         for await (const event of streamGenerate({ prompt: trimmed, history })) {
           if (event.type === "chunk") {
-            botText += event.text;
             if (!streamStarted) {
               streamStarted = true;
               setLoading(false);
               setStreamingMessageId(botId);
-              syncBotMessage(botText);
-            } else {
-              batcher.schedule();
             }
+            reveal.push(event.text);
             continue;
           }
 
           if (event.type === "error") {
-            batcher.cancel();
+            reveal.cancel();
             if (event.status === 429) {
               throw new Error("Daily limit reached. Try again tomorrow.");
             }
@@ -296,7 +296,7 @@ export default function ChatPage() {
           }
 
           if (event.type === "done") {
-            batcher.flush();
+            reveal.flush();
             setStreamingMessageId(null);
 
             if (event.model_tier === "standard") {
@@ -312,17 +312,17 @@ export default function ChatPage() {
 
             if (!streamStarted) {
               setLoading(false);
-              syncBotMessage(botText);
             }
 
-            void persistMessage(conversationId, "assistant", botText);
-            if (isFirstExchange && botText) {
-              void generateConversationTitle(conversationId, trimmed, botText);
+            const finalText = reveal.getTarget();
+            void persistMessage(conversationId, "assistant", finalText);
+            if (isFirstExchange && finalText) {
+              void generateConversationTitle(conversationId, trimmed, finalText);
             }
           }
         }
       } catch (err) {
-        batcher.cancel();
+        reveal.cancel();
         setStreamingMessageId(null);
         const fallbackText =
           err instanceof Error && err.message.includes("Daily limit")

@@ -1,6 +1,6 @@
 "use client";
 
-import { RefObject, useState } from "react";
+import { memo, RefObject, useState } from "react";
 import { Logo } from "@/app/components/Logo";
 
 export interface Message {
@@ -138,6 +138,44 @@ function FeedbackButton({
   );
 }
 
+const AssistantMessage = memo(function AssistantMessage({
+  message,
+  isStreaming,
+  showProminentPrompt,
+  onFeedback,
+}: {
+  message: Message;
+  isStreaming: boolean;
+  showProminentPrompt: boolean;
+  onFeedback: (messageId: string, rating: number, notes: string) => Promise<void>;
+}) {
+  return (
+    <div className="group rounded-lg border border-border-subtle bg-surface-elevated px-5 py-4" style={{ boxShadow: "var(--shadow-sm)" }}>
+      <div className="text-[14px] leading-[1.75] text-foreground whitespace-pre-wrap">
+        {message.content}
+        {isStreaming ? <span className="stream-cursor" aria-hidden /> : null}
+      </div>
+      {!isStreaming ? (
+        <FeedbackButton
+          messageId={message.id}
+          onFeedback={onFeedback}
+          showProminentPrompt={showProminentPrompt}
+        />
+      ) : null}
+    </div>
+  );
+});
+
+const UserMessage = memo(function UserMessage({ message }: { message: Message }) {
+  return (
+    <div className="pl-1 py-1">
+      <div className="text-[14px] leading-[1.75] text-foreground whitespace-pre-wrap">
+        {message.content}
+      </div>
+    </div>
+  );
+});
+
 export default function MessageList({
   messages,
   loading,
@@ -167,29 +205,18 @@ export default function MessageList({
         {messages.map((m) => {
           const isStreaming = m.id === streamingMessageId;
           return (
-          <div key={m.id} className="message-enter">
-            {m.role === "assistant" ? (
-              <div className="group rounded-lg border border-border-subtle bg-surface-elevated px-5 py-4" style={{ boxShadow: "var(--shadow-sm)" }}>
-                <div className="text-[14px] leading-[1.75] text-foreground whitespace-pre-wrap">
-                  {m.content}
-                  {isStreaming ? <span className="stream-cursor" aria-hidden /> : null}
-                </div>
-                {!isStreaming ? (
-                  <FeedbackButton
-                    messageId={m.id}
-                    onFeedback={onFeedback}
-                    showProminentPrompt={m.id === firstAssistantMessageId}
-                  />
-                ) : null}
-              </div>
-            ) : (
-              <div className="pl-1 py-1">
-                <div className="text-[14px] leading-[1.75] text-foreground whitespace-pre-wrap">
-                  {m.content}
-                </div>
-              </div>
-            )}
-          </div>
+            <div key={m.id} className={isStreaming ? undefined : "message-enter"}>
+              {m.role === "assistant" ? (
+                <AssistantMessage
+                  message={m}
+                  isStreaming={isStreaming}
+                  showProminentPrompt={m.id === firstAssistantMessageId}
+                  onFeedback={onFeedback}
+                />
+              ) : (
+                <UserMessage message={m} />
+              )}
+            </div>
           );
         })}
 

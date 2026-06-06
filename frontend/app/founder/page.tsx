@@ -16,7 +16,7 @@ const contributors = [
   },
   {
     name: "Aidan Etkin",
-    stats: ["Coach of TOC Champion", "TOC Finalist", "TOC Semi-Finalist"],
+    stats: ["Coached champions of the TOC, TFA, and Harvard"],
   },
 ];
 
@@ -58,7 +58,7 @@ export default function FounderPage() {
               alt="Justin Wen"
               width={256}
               height={256}
-              className="h-64 w-64 object-cover object-[center_10%]"
+              className="h-64 w-64 object-cover object-[center_22%]"
               priority
             />
           </div>

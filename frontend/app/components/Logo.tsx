@@ -1,24 +1,26 @@
-import Image from "next/image";
-
 interface LogoProps {
   variant?: "icon" | "full";
   size?: number;
   className?: string;
 }
 
+const ICON_ASPECT = 320 / 360;
+const FULL_ASPECT = 400 / 460;
+
 export function Logo({ variant = "icon", size = 32, className = "" }: LogoProps) {
-  const src = variant === "full" ? "/debate-ai-logo.png" : "/debate-ai-icon.png";
-  const aspect = variant === "full" ? 1 : 580 / 1024;
-  const height = Math.round(size * aspect);
+  const src = variant === "full" ? "/debate-ai-logo.svg" : "/debate-ai-icon.svg";
+  const aspect = variant === "full" ? FULL_ASPECT : ICON_ASPECT;
+  const height = Math.round(size / aspect);
 
   return (
-    <Image
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
       src={src}
       alt="DebateAI"
       width={size}
       height={height}
       className={className}
-      priority={size >= 32}
+      decoding="async"
     />
   );
 }
@@ -27,17 +29,19 @@ interface LogoWithLabelProps {
   size?: number;
   className?: string;
   labelClassName?: string;
+  showLabel?: boolean;
 }
 
 export function LogoWithLabel({
   size = 32,
   className = "",
   labelClassName = "text-[15px] font-semibold tracking-tight",
+  showLabel = true,
 }: LogoWithLabelProps) {
   return (
     <div className={`flex items-center gap-2.5 ${className}`}>
-      <Logo size={size} className="shrink-0 rounded-lg" />
-      <span className={labelClassName}>DebateAI</span>
+      <Logo size={size} className="shrink-0" />
+      {showLabel ? <span className={labelClassName}>DebateAI</span> : null}
     </div>
   );
 }

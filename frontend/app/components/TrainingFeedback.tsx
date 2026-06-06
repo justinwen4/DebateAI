@@ -130,7 +130,7 @@ export default function TrainingFeedback() {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept=".pdf,.txt,.md,.doc,.docx"
+                    accept=".pdf,.txt,.md,.docx"
                     className="sr-only"
                     disabled={status === "submitting"}
                     onChange={(event) => setFileName(event.target.files?.[0]?.name ?? null)}
@@ -138,7 +138,7 @@ export default function TrainingFeedback() {
                   <span className="text-sm text-foreground/80">
                     {fileName ? fileName : "Click to attach a brief, card file, or notes"}
                   </span>
-                  <span className="mt-1 text-xs text-muted">PDF, TXT, MD, DOC</span>
+                  <span className="mt-1 text-xs text-muted">PDF, TXT, MD, DOCX</span>
                 </label>
               </div>
 

@@ -26,6 +26,7 @@ from supabase import Client, create_client
 load_dotenv()
 
 from services.auth import AuthUser, require_user
+from services.training_files import extract_training_file_text, upload_training_file
 from services.limits import (
     FEEDBACK_DAILY_LIMIT,
     GENERATE_DAILY_LIMIT,
@@ -268,10 +269,21 @@ async def training_request(
                 status_code=400,
                 detail=f"File must be at most {MAX_TRAINING_FILE_BYTES // 1024} KB.",
             )
-        if b"\x00" in content[:4096]:
-            raise HTTPException(status_code=400, detail="Binary files are not supported.")
+
+        supabase = _get_supabase()
+        request_id, storage_path = upload_training_file(
+            supabase,
+            user_id=user.id,
+            filename=file.filename,
+            content=content,
+        )
+        extracted_text = extract_training_file_text(file.filename, content)
+
+        payload["id"] = request_id
         payload["file_name"] = file.filename
-        payload["file_content"] = content.decode("utf-8", errors="replace")
+        payload["file_storage_path"] = storage_path
+        if extracted_text:
+            payload["file_content"] = extracted_text
 
     try:
         _get_supabase().table("training_requests").insert(payload).execute()

@@ -29,6 +29,7 @@ interface ChatAreaProps {
   onSendMessage: (text: string) => void;
   onFeedback: (messageId: string, rating: number, notes: string) => Promise<void>;
   loading: boolean;
+  streamingMessageId?: string | null;
   scrollRef: RefObject<HTMLDivElement | null>;
   usageBanner: UsageBannerState | null;
   onDismissUsageBanner: () => void;
@@ -47,6 +48,7 @@ export default function ChatArea({
   onSendMessage,
   onFeedback,
   loading,
+  streamingMessageId = null,
   scrollRef,
   usageBanner,
   onDismissUsageBanner,
@@ -94,7 +96,13 @@ export default function ChatArea({
         </div>
       ) : null}
 
-      <MessageList messages={messages} loading={loading} scrollRef={scrollRef} onFeedback={onFeedback} />
+      <MessageList
+        messages={messages}
+        loading={loading}
+        streamingMessageId={streamingMessageId}
+        scrollRef={scrollRef}
+        onFeedback={onFeedback}
+      />
       {messages.length === 0 ? (
         <StarterQuestions onSelect={onSendMessage} disabled={loading} />
       ) : null}

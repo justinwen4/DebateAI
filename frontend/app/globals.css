@@ -91,6 +91,21 @@
   animation: message-in 0.25s ease-out;
 }
 
+.stream-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  background: color-mix(in srgb, var(--foreground) 55%, transparent);
+  animation: stream-cursor-blink 1s step-end infinite;
+}
+
+@keyframes stream-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
 @keyframes qa-fade-in {
   from {
     opacity: 0;

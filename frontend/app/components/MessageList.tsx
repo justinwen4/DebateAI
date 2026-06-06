@@ -12,6 +12,7 @@ export interface Message {
 interface MessageListProps {
   messages: Message[];
   loading: boolean;
+  streamingMessageId?: string | null;
   scrollRef: RefObject<HTMLDivElement | null>;
   onFeedback: (messageId: string, rating: number, notes: string) => Promise<void>;
 }
@@ -137,7 +138,13 @@ function FeedbackButton({
   );
 }
 
-export default function MessageList({ messages, loading, scrollRef, onFeedback }: MessageListProps) {
+export default function MessageList({
+  messages,
+  loading,
+  streamingMessageId = null,
+  scrollRef,
+  onFeedback,
+}: MessageListProps) {
   const firstAssistantMessageId = messages.find((m) => m.role === "assistant")?.id;
 
   if (messages.length === 0 && !loading) {
@@ -157,18 +164,23 @@ export default function MessageList({ messages, loading, scrollRef, onFeedback }
   return (
     <div ref={scrollRef} className="flex-1 overflow-y-auto">
       <div className="max-w-[800px] mx-auto px-6 py-5 space-y-3">
-        {messages.map((m) => (
+        {messages.map((m) => {
+          const isStreaming = m.id === streamingMessageId;
+          return (
           <div key={m.id} className="message-enter">
             {m.role === "assistant" ? (
               <div className="group rounded-lg border border-border-subtle bg-surface-elevated px-5 py-4" style={{ boxShadow: "var(--shadow-sm)" }}>
                 <div className="text-[14px] leading-[1.75] text-foreground whitespace-pre-wrap">
                   {m.content}
+                  {isStreaming ? <span className="stream-cursor" aria-hidden /> : null}
                 </div>
-                <FeedbackButton
-                  messageId={m.id}
-                  onFeedback={onFeedback}
-                  showProminentPrompt={m.id === firstAssistantMessageId}
-                />
+                {!isStreaming ? (
+                  <FeedbackButton
+                    messageId={m.id}
+                    onFeedback={onFeedback}
+                    showProminentPrompt={m.id === firstAssistantMessageId}
+                  />
+                ) : null}
               </div>
             ) : (
               <div className="pl-1 py-1">
@@ -178,7 +190,8 @@ export default function MessageList({ messages, loading, scrollRef, onFeedback }
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
 
         {loading && (
           <div className="message-enter">

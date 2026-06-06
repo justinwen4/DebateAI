@@ -10,6 +10,7 @@ import { supabase } from "@/app/lib/supabase";
 import { DEFAULT_CONVERSATION_TITLE, provisionalConversationTitle } from "@/app/lib/conversationTitle";
 import { apiFetch } from "@/app/lib/api";
 import { streamGenerate } from "@/app/lib/streamGenerate";
+import { createFrameBatcher } from "@/app/lib/batchedStream";
 import type { UsageBannerState } from "@/app/components/ChatArea";
 
 interface DatabaseMessage {
@@ -34,6 +35,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [loadingConversations, setLoadingConversations] = useState(true);
@@ -70,8 +72,13 @@ export default function ChatPage() {
   }, [authLoading, router, user]);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, loading]);
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({
+      top: el.scrollHeight,
+      behavior: streamingMessageId ? "auto" : "smooth",
+    });
+  }, [messages, loading, streamingMessageId]);
 
   const loadConversationMessages = useCallback(async (conversationId: string) => {
     const { data, error } = await supabase
@@ -88,6 +95,7 @@ export default function ChatPage() {
     }));
     setMessages(nextMessages);
     setInput("");
+    setStreamingMessageId(null);
   }, []);
 
   const loadConversations = useCallback(async () => {
@@ -253,6 +261,17 @@ export default function ChatPage() {
       let botText = "";
       let streamStarted = false;
 
+      const syncBotMessage = (text: string) => {
+        setMessages((prev) => {
+          if (!prev.some((message) => message.id === botId)) {
+            return [...prev, { id: botId, role: "assistant", content: text }];
+          }
+          return prev.map((message) => (message.id === botId ? { ...message, content: text } : message));
+        });
+      };
+
+      const batcher = createFrameBatcher(() => syncBotMessage(botText));
+
       try {
         for await (const event of streamGenerate({ prompt: trimmed, history })) {
           if (event.type === "chunk") {
@@ -260,16 +279,16 @@ export default function ChatPage() {
             if (!streamStarted) {
               streamStarted = true;
               setLoading(false);
-              setMessages((prev) => [...prev, { id: botId, role: "assistant", content: botText }]);
+              setStreamingMessageId(botId);
+              syncBotMessage(botText);
             } else {
-              setMessages((prev) =>
-                prev.map((message) => (message.id === botId ? { ...message, content: botText } : message)),
-              );
+              batcher.schedule();
             }
             continue;
           }
 
           if (event.type === "error") {
+            batcher.cancel();
             if (event.status === 429) {
               throw new Error("Daily limit reached. Try again tomorrow.");
             }
@@ -277,6 +296,9 @@ export default function ChatPage() {
           }
 
           if (event.type === "done") {
+            batcher.flush();
+            setStreamingMessageId(null);
+
             if (event.model_tier === "standard") {
               setUsageBanner({
                 tier: "standard",
@@ -290,7 +312,7 @@ export default function ChatPage() {
 
             if (!streamStarted) {
               setLoading(false);
-              setMessages((prev) => [...prev, { id: botId, role: "assistant", content: botText }]);
+              syncBotMessage(botText);
             }
 
             void persistMessage(conversationId, "assistant", botText);
@@ -300,17 +322,15 @@ export default function ChatPage() {
           }
         }
       } catch (err) {
+        batcher.cancel();
+        setStreamingMessageId(null);
         const fallbackText =
           err instanceof Error && err.message.includes("Daily limit")
             ? err.message
             : "Something went wrong — the backend may be unreachable.";
         setLoading(false);
         if (streamStarted) {
-          setMessages((prev) =>
-            prev.map((message) =>
-              message.id === botId ? { ...message, content: fallbackText } : message,
-            ),
-          );
+          syncBotMessage(fallbackText);
         } else {
           setMessages((prev) => [
             ...prev,
@@ -320,6 +340,7 @@ export default function ChatPage() {
         void persistMessage(conversationId, "assistant", fallbackText);
       } finally {
         setLoading(false);
+        setStreamingMessageId(null);
         void touchConversation(conversationId);
       }
     },
@@ -474,6 +495,7 @@ export default function ChatPage() {
         onSendMessage={sendMessage}
         onFeedback={handleFeedback}
         loading={loading}
+        streamingMessageId={streamingMessageId}
         scrollRef={scrollRef}
         usageBanner={usageBanner}
         onDismissUsageBanner={() => setUsageBanner(null)}

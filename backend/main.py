@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import os
 import sys
@@ -14,6 +15,7 @@ logging.basicConfig(
 )
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -39,7 +41,7 @@ from services.limits import (
     enforce_rate_limit,
     validate_history,
 )
-from services.llm import generate_response, generate_title
+from services.llm import generate_title, stream_generate_response_sync
 from services.metrics import fetch_product_metrics, is_admin_configured, verify_admin_key
 from services.rag import retrieve, seed_from_dataset
 from services.usage import get_monthly_count, pick_model_for_generation, record_generation
@@ -106,15 +108,11 @@ class GenerateRequest(BaseModel):
     history: list[dict[str, str]] | None = None
 
 
-class GenerateResponse(BaseModel):
-    output: str
-    model_tier: Literal["premium", "standard"]
-    monthly_usage: int
-    premium_monthly_limit: int
-    notice: str | None = None
+def _sse_event(payload: dict) -> str:
+    return f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
 
 
-@app.post("/generate", response_model=GenerateResponse)
+@app.post("/generate")
 @limiter.limit("200/hour")
 async def generate(
     request: Request,
@@ -123,36 +121,59 @@ async def generate(
 ):
     enforce_rate_limit(user.id, "generate", GENERATE_DAILY_LIMIT)
     valid_history = validate_history(req.history)
-
-    rag_history = valid_history[-8:]
-    rag_query_parts = [turn["content"].strip() for turn in rag_history]
-    rag_query_parts.append(req.prompt.strip())
-    rag_query = "\n".join(rag_query_parts)
+    prompt = req.prompt.strip()
+    supabase = _get_supabase()
 
     try:
-        current_count = get_monthly_count(_get_supabase(), user.id)
-        model, notice = pick_model_for_generation(current_count)
-        context = await retrieve(rag_query, slot_query=req.prompt)
-        output = await generate_response(
-            req.prompt.strip(),
-            context=context,
-            history=valid_history,
-            model=model,
+        current_count, context = await asyncio.gather(
+            asyncio.to_thread(get_monthly_count, supabase, user.id),
+            retrieve(prompt, slot_query=prompt),
         )
-        monthly_usage = record_generation(_get_supabase(), user.id)
+        model, notice = pick_model_for_generation(current_count)
     except HTTPException:
         raise
     except Exception:
-        logger.exception("generate failed user=%s", user.id)
+        logger.exception("generate prep failed user=%s", user.id)
         raise HTTPException(status_code=500, detail="Generation failed") from None
 
-    model_tier: Literal["premium", "standard"] = "premium" if monthly_usage <= SONNET_MONTHLY_LIMIT else "standard"
-    return GenerateResponse(
-        output=output,
-        model_tier=model_tier,
-        monthly_usage=monthly_usage,
-        premium_monthly_limit=SONNET_MONTHLY_LIMIT,
-        notice=notice,
+    def event_stream():
+        try:
+            for chunk in stream_generate_response_sync(
+                prompt,
+                context=context,
+                history=valid_history,
+                model=model,
+            ):
+                if chunk:
+                    yield _sse_event({"type": "chunk", "text": chunk})
+
+            monthly_usage = record_generation(supabase, user.id)
+            model_tier: Literal["premium", "standard"] = (
+                "premium" if monthly_usage <= SONNET_MONTHLY_LIMIT else "standard"
+            )
+            yield _sse_event(
+                {
+                    "type": "done",
+                    "model_tier": model_tier,
+                    "monthly_usage": monthly_usage,
+                    "premium_monthly_limit": SONNET_MONTHLY_LIMIT,
+                    "notice": notice,
+                }
+            )
+        except HTTPException as exc:
+            yield _sse_event({"type": "error", "detail": str(exc.detail), "status": exc.status_code})
+        except Exception:
+            logger.exception("generate stream failed user=%s", user.id)
+            yield _sse_event({"type": "error", "detail": "Generation failed", "status": 500})
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
     )
 
 

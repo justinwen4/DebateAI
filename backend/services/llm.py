@@ -75,15 +75,7 @@ def _generate_response_sync(
     model: str = PREMIUM_MODEL,
 ) -> str:
     """Generate a tutor-style response for the given debate question."""
-    system = SYSTEM_PROMPT
-    if context:
-        system += (
-            "\n\nRetrieved examples for this topic — if an example directly answers the question, follow it closely; if it covers a related but different angle, reason from its underlying logic to answer the specific question asked:\n\n"
-            + context
-        )
-
-    messages = _sanitize_history(history)
-    messages.append({"role": "user", "content": prompt})
+    system, messages = _build_messages(prompt, context, history)
 
     msg = _get_client().messages.create(
         model=model,
@@ -94,6 +86,42 @@ def _generate_response_sync(
     )
     parts = [block.text for block in msg.content if block.type == "text"]
     return "".join(parts).strip()
+
+
+def _build_messages(
+    prompt: str,
+    context: str = "",
+    history: list[dict[str, str]] | None = None,
+) -> tuple[str, list[dict[str, str]]]:
+    system = SYSTEM_PROMPT
+    if context:
+        system += (
+            "\n\nRetrieved examples for this topic — if an example directly answers the question, follow it closely; if it covers a related but different angle, reason from its underlying logic to answer the specific question asked:\n\n"
+            + context
+        )
+
+    messages = _sanitize_history(history)
+    messages.append({"role": "user", "content": prompt})
+    return system, messages
+
+
+def stream_generate_response_sync(
+    prompt: str,
+    context: str = "",
+    history: list[dict[str, str]] | None = None,
+    model: str = PREMIUM_MODEL,
+):
+    """Yield tutor response text chunks as they are generated."""
+    system, messages = _build_messages(prompt, context, history)
+
+    with _get_client().messages.stream(
+        model=model,
+        system=system,
+        messages=messages,
+        temperature=0.2,
+        max_tokens=300,
+    ) as stream:
+        yield from stream.text_stream
 
 
 async def generate_response(

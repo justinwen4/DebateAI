@@ -9,6 +9,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { supabase } from "@/app/lib/supabase";
 import { DEFAULT_CONVERSATION_TITLE, provisionalConversationTitle } from "@/app/lib/conversationTitle";
 import { apiFetch } from "@/app/lib/api";
+import { streamGenerate } from "@/app/lib/streamGenerate";
 import type { UsageBannerState } from "@/app/components/ChatArea";
 
 interface DatabaseMessage {
@@ -17,16 +18,16 @@ interface DatabaseMessage {
   content: string;
 }
 
-interface GenerateApiResponse {
-  output: string;
-  model_tier: "premium" | "standard";
-  monthly_usage: number;
-  premium_monthly_limit: number;
-  notice: string | null;
-}
-
 interface TitleApiResponse {
   title: string;
+}
+
+function persistMessage(conversationId: string, role: "user" | "assistant", content: string) {
+  void supabase.from("messages").insert({
+    conversation_id: conversationId,
+    role,
+    content,
+  });
 }
 
 export default function ChatPage() {
@@ -236,74 +237,90 @@ export default function ChatPage() {
       setInput("");
       setLoading(true);
 
-      await supabase.from("messages").insert({
-        conversation_id: conversationId,
-        role: "user",
-        content: trimmed,
-      });
+      void persistMessage(conversationId, "user", trimmed);
 
       if (isFirstExchange) {
         const title = provisionalConversationTitle(trimmed);
-        await supabase.from("conversations").update({ title }).eq("id", conversationId).eq("title_locked", false);
+        void supabase
+          .from("conversations")
+          .update({ title })
+          .eq("id", conversationId)
+          .eq("title_locked", false);
         updateConversationTitle(conversationId, title);
       }
 
+      const botId = crypto.randomUUID();
+      let botText = "";
+      let streamStarted = false;
+
       try {
-        const res = await apiFetch("/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: trimmed, history }),
-        });
-
-        if (!res.ok) {
-          if (res.status === 429) {
-            throw new Error("Daily limit reached. Try again tomorrow.");
+        for await (const event of streamGenerate({ prompt: trimmed, history })) {
+          if (event.type === "chunk") {
+            botText += event.text;
+            if (!streamStarted) {
+              streamStarted = true;
+              setLoading(false);
+              setMessages((prev) => [...prev, { id: botId, role: "assistant", content: botText }]);
+            } else {
+              setMessages((prev) =>
+                prev.map((message) => (message.id === botId ? { ...message, content: botText } : message)),
+              );
+            }
+            continue;
           }
-          throw new Error(`API error ${res.status}`);
-        }
 
-        const data = (await res.json()) as GenerateApiResponse;
-        const botText = data.output;
-        if (data.model_tier === "standard") {
-          setUsageBanner({
-            tier: "standard",
-            monthlyUsage: data.monthly_usage,
-            premiumLimit: data.premium_monthly_limit,
-            message:
-              data.notice ??
-              `You've used ${data.monthly_usage}/${data.premium_monthly_limit} premium responses this month. Continuing on our standard model (Haiku) until your limit resets.`,
-          });
-        }
-        const botMsg: Message = { id: crypto.randomUUID(), role: "assistant", content: botText };
-        setMessages((prev) => [...prev, botMsg]);
-        await supabase.from("messages").insert({
-          conversation_id: conversationId,
-          role: "assistant",
-          content: botText,
-        });
+          if (event.type === "error") {
+            if (event.status === 429) {
+              throw new Error("Daily limit reached. Try again tomorrow.");
+            }
+            throw new Error(event.detail);
+          }
 
-        if (isFirstExchange) {
-          void generateConversationTitle(conversationId, trimmed, botText);
+          if (event.type === "done") {
+            if (event.model_tier === "standard") {
+              setUsageBanner({
+                tier: "standard",
+                monthlyUsage: event.monthly_usage,
+                premiumLimit: event.premium_monthly_limit,
+                message:
+                  event.notice ??
+                  `You've used ${event.monthly_usage}/${event.premium_monthly_limit} premium responses this month. Continuing on our standard model (Haiku) until your limit resets.`,
+              });
+            }
+
+            if (!streamStarted) {
+              setLoading(false);
+              setMessages((prev) => [...prev, { id: botId, role: "assistant", content: botText }]);
+            }
+
+            void persistMessage(conversationId, "assistant", botText);
+            if (isFirstExchange && botText) {
+              void generateConversationTitle(conversationId, trimmed, botText);
+            }
+          }
         }
       } catch (err) {
         const fallbackText =
           err instanceof Error && err.message.includes("Daily limit")
             ? err.message
             : "Something went wrong — the backend may be unreachable.";
-        const errMsg: Message = {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content: fallbackText,
-        };
-        setMessages((prev) => [...prev, errMsg]);
-        await supabase.from("messages").insert({
-          conversation_id: conversationId,
-          role: "assistant",
-          content: fallbackText,
-        });
-      } finally {
-        await touchConversation(conversationId);
         setLoading(false);
+        if (streamStarted) {
+          setMessages((prev) =>
+            prev.map((message) =>
+              message.id === botId ? { ...message, content: fallbackText } : message,
+            ),
+          );
+        } else {
+          setMessages((prev) => [
+            ...prev,
+            { id: botId, role: "assistant", content: fallbackText },
+          ]);
+        }
+        void persistMessage(conversationId, "assistant", fallbackText);
+      } finally {
+        setLoading(false);
+        void touchConversation(conversationId);
       }
     },
     [

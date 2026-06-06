@@ -58,7 +58,7 @@ export default function FounderPage() {
               alt="Justin Wen"
               width={256}
               height={256}
-              className="h-64 w-64 object-cover object-[center_22%]"
+              className="h-64 w-64 object-cover object-[center_46%]"
               priority
             />
           </div>

@@ -72,7 +72,7 @@ export default function LandingPage() {
               href="/contact"
               className="hidden rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:text-foreground sm:inline-block"
             >
-              Contact
+              Contact Us
             </Link>
             <Link
               href="/login"
@@ -240,7 +240,7 @@ export default function LandingPage() {
               Privacy
             </Link>
             <Link href="/contact" className="transition-colors hover:text-white">
-              Contact
+              Contact us
             </Link>
           </div>
           <div className="flex items-center gap-3">

@@ -205,6 +205,21 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <section className="border-t border-white/10 bg-[#0f1722] text-white/70">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-6">
+          <p className="text-sm">
+            <span className="font-medium text-white/90">Got questions or found a bug?</span>{" "}
+            We&apos;d love to hear from you.
+          </p>
+          <Link
+            href="/contact"
+            className="shrink-0 text-sm font-semibold text-accent transition-colors hover:text-white"
+          >
+            Contact us &rarr;
+          </Link>
+        </div>
+      </section>
+
       <footer className="bg-[#0f1722] text-white/70">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-8 px-6 py-10 sm:flex-row sm:items-center">
           <div>
@@ -217,6 +232,9 @@ export default function LandingPage() {
             </Link>
             <Link href="/privacy" className="transition-colors hover:text-white">
               Privacy
+            </Link>
+            <Link href="/contact" className="transition-colors hover:text-white">
+              Contact
             </Link>
           </div>
           <div className="flex items-center gap-3">

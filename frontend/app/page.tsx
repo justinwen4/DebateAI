@@ -69,6 +69,12 @@ export default function LandingPage() {
               Founder
             </Link>
             <Link
+              href="/contact"
+              className="hidden rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:text-foreground sm:inline-block"
+            >
+              Contact
+            </Link>
+            <Link
               href="/login"
               className="rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-hover"
             >

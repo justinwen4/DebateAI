@@ -6,7 +6,6 @@ const partners: {
   href: string;
   logo?: string;
   objectPosition?: string;
-  darkBg?: boolean;
 }[] = [
   {
     name: "Circuit Skillbuilder",
@@ -31,7 +30,6 @@ const partners: {
     tagline: "Coaching for the national circuit",
     href: "https://www.cmestrategy.org/",
     logo: "/logo-cme-strategy.png",
-    darkBg: true,
   },
   {
     name: "Strake Jesuit Debate",
@@ -69,11 +67,7 @@ export default function PartnershipsStripe() {
               href={partner.href}
               target="_blank"
               rel="noopener noreferrer"
-              className={`flex min-w-[220px] flex-col items-center gap-3 rounded-xl border px-5 py-4 shadow-[var(--shadow-sm)] transition-all duration-200 hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5 ${
-                partner.darkBg
-                  ? "border-neutral-700 bg-[#2d2440] hover:border-neutral-500"
-                  : "border-border bg-surface hover:border-accent/40"
-              }`}
+              className="flex min-w-[220px] flex-col items-center gap-3 rounded-xl border border-border bg-surface px-5 py-4 shadow-[var(--shadow-sm)] transition-all duration-200 hover:border-accent/40 hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5"
             >
               {partner.logo && (
                 <div className="relative h-12 w-full">

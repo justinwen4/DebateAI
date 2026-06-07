@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { LogoWithLabel } from "@/app/components/Logo";
 import EditableTitle from "@/app/components/EditableTitle";
 
@@ -100,6 +100,29 @@ export default function Sidebar({
     return userEmail;
   }, [userEmail]);
 
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+  const handleDeleteClick = useCallback(
+    (e: React.MouseEvent, conversationId: string) => {
+      e.stopPropagation();
+      if (pendingDeleteId === conversationId) {
+        onDeleteConversation(conversationId);
+        setPendingDeleteId(null);
+      } else {
+        setPendingDeleteId(conversationId);
+      }
+    },
+    [pendingDeleteId, onDeleteConversation],
+  );
+
+  const handleConversationSelect = useCallback(
+    (conversationId: string) => {
+      setPendingDeleteId(null);
+      onSelectConversation(conversationId);
+    },
+    [onSelectConversation],
+  );
+
   return (
     <aside
       className={`shrink-0 border-r border-border-subtle bg-surface flex flex-col h-full overflow-hidden transition-[width] duration-200 ease-in-out ${
@@ -138,6 +161,7 @@ export default function Sidebar({
         ) : (
           conversations.map((conversation) => {
             const active = conversation.id === activeConversationId;
+            const pendingDelete = pendingDeleteId === conversation.id;
             return (
               <div
                 key={conversation.id}
@@ -150,11 +174,11 @@ export default function Sidebar({
                 <div
                   role="button"
                   tabIndex={0}
-                  onClick={() => onSelectConversation(conversation.id)}
+                  onClick={() => handleConversationSelect(conversation.id)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
-                      onSelectConversation(conversation.id);
+                      handleConversationSelect(conversation.id);
                     }
                   }}
                   className="w-full rounded-lg px-3 py-2 pr-9 text-left cursor-pointer"
@@ -162,29 +186,55 @@ export default function Sidebar({
                   <EditableTitle
                     value={conversation.title}
                     onSave={(title) => onRenameConversation(conversation.id, title)}
-                    onActivate={() => onSelectConversation(conversation.id)}
+                    onActivate={() => handleConversationSelect(conversation.id)}
                     editTrigger="doubleClick"
                     className="text-[13px] font-medium text-foreground hover:text-foreground/80"
                     inputClassName="text-[13px] font-medium"
                   />
                   <p className="mt-0.5 text-[11px] text-muted">{formatRelativeTime(conversation.updated_at)}</p>
                 </div>
-                <button
-                  type="button"
-                  aria-label={`Delete ${conversation.title}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteConversation(conversation.id);
-                  }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:bg-surface hover:text-red-600 cursor-pointer"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                    <line x1="10" y1="11" x2="10" y2="17" />
-                    <line x1="14" y1="11" x2="14" y2="17" />
-                  </svg>
-                </button>
+                {/*
+                  Mobile: only render the button when this conversation is active,
+                  so inactive rows have no invisible tap target that can cause
+                  accidental deletes. Desktop: keep the existing hover reveal.
+                  Two-tap confirmation prevents fat-finger deletes on all devices.
+                */}
+                {(active || !("ontouchstart" in globalThis)) && (
+                  <button
+                    type="button"
+                    aria-label={
+                      pendingDelete
+                        ? `Confirm delete ${conversation.title}`
+                        : `Delete ${conversation.title}`
+                    }
+                    onClick={(e) => handleDeleteClick(e, conversation.id)}
+                    onBlur={() => {
+                      if (pendingDeleteId === conversation.id) setPendingDeleteId(null);
+                    }}
+                    className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 transition-all cursor-pointer
+                      ${pendingDelete
+                        ? "opacity-100 bg-red-100 text-red-600 dark:bg-red-900/40"
+                        : "text-muted hover:bg-surface hover:text-red-600"
+                      }
+                      ${active
+                        ? "opacity-100"
+                        : "opacity-0 pointer-events-none md:pointer-events-auto md:group-hover:opacity-100"
+                      }`}
+                  >
+                    {pendingDelete ? (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        <line x1="10" y1="11" x2="10" y2="17" />
+                        <line x1="14" y1="11" x2="14" y2="17" />
+                      </svg>
+                    )}
+                  </button>
+                )}
               </div>
             );
           })

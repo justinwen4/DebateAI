@@ -62,20 +62,21 @@ export default function PartnershipsStripe() {
               href={partner.href}
               target="_blank"
               rel="noopener noreferrer"
-              className={`flex min-w-[220px] items-center justify-center rounded-xl border px-5 py-4 shadow-[var(--shadow-sm)] transition-all duration-200 hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5 ${
+              className={`flex min-w-[240px] items-center justify-center rounded-xl border px-4 py-4 shadow-[var(--shadow-sm)] transition-all duration-200 hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5 ${
                 partner.darkLogo
                   ? "border-neutral-700 bg-[#1a1614] hover:border-neutral-500"
                   : "border-border bg-surface hover:border-accent/40"
               }`}
             >
               {partner.logo ? (
-                <Image
-                  src={partner.logo}
-                  alt={partner.name}
-                  width={140}
-                  height={48}
-                  className="object-contain max-h-12"
-                />
+                <div className="relative h-12 w-full">
+                  <Image
+                    src={partner.logo}
+                    alt={partner.name}
+                    fill
+                    className="object-contain"
+                  />
+                </div>
               ) : (
                 <div className="flex flex-col">
                   <span className="text-sm font-semibold text-foreground leading-snug">

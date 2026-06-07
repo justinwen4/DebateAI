@@ -38,6 +38,12 @@ const partners: {
     href: "https://www.strakejesuit.org/student-life/student-activities/debate",
     logo: "/logo-strake-jesuit.png",
   },
+  {
+    name: "Prime Debate Institute",
+    tagline: "For youth, by youth",
+    href: "https://primedebateinstitute.weebly.com/",
+    logo: "/logo-pdi.png",
+  },
 ];
 
 export default function PartnershipsStripe() {

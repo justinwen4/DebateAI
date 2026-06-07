@@ -43,6 +43,12 @@ const partners: {
     href: "https://primedebateinstitute.weebly.com/",
     logo: "/logo-pdi.png",
   },
+  {
+    name: "PepTalk Debate",
+    tagline: "Free LD mentorship for under-resourced debaters",
+    href: "https://www.peptalkdebate.org/",
+    logo: "/logo-peptalk-debate.png",
+  },
 ];
 
 export default function PartnershipsStripe() {

@@ -5,6 +5,7 @@ import { LogoWithLabel } from "@/app/components/Logo";
 import ThemeToggle from "@/app/components/ThemeToggle";
 import RotatingQACard, { type SampleQA } from "@/app/components/RotatingQACard";
 import TrainingFeedback from "@/app/components/TrainingFeedback";
+import PartnershipsStripe from "@/app/components/PartnershipsStripe";
 
 const samplePairs: SampleQA[] = [
   {
@@ -174,6 +175,8 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      <PartnershipsStripe />
 
       <section className="border-y border-border-subtle bg-background">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-6 px-6 py-12 sm:flex-row sm:items-center">

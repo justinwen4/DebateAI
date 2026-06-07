@@ -5,14 +5,13 @@ const partners: {
   tagline: string;
   href: string;
   logo?: string;
-  darkLogo?: boolean;
+  objectPosition?: string;
 }[] = [
   {
     name: "Circuit Skillbuilder",
     tagline: "Free resources for the debate community",
     href: "https://circuitskillbuilder.org/",
     logo: "/logo-circuit-skillbuilder.png",
-    darkLogo: true,
   },
   {
     name: "Kritikal Discussions",
@@ -31,6 +30,7 @@ const partners: {
     tagline: "Coaching for the national circuit",
     href: "https://www.cmestrategy.org/",
     logo: "/logo-cme-strategy.png",
+    objectPosition: "center center",
   },
   {
     name: "Strake Jesuit Debate",
@@ -62,31 +62,27 @@ export default function PartnershipsStripe() {
               href={partner.href}
               target="_blank"
               rel="noopener noreferrer"
-              className={`flex min-w-[240px] items-center justify-center rounded-xl border px-4 py-4 shadow-[var(--shadow-sm)] transition-all duration-200 hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5 ${
-                partner.darkLogo
-                  ? "border-neutral-700 bg-[#1a1614] hover:border-neutral-500"
-                  : "border-border bg-surface hover:border-accent/40"
-              }`}
+              className="flex min-w-[220px] flex-col items-center gap-3 rounded-xl border border-border bg-surface px-5 py-4 shadow-[var(--shadow-sm)] transition-all duration-200 hover:border-accent/40 hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5"
             >
-              {partner.logo ? (
+              {partner.logo && (
                 <div className="relative h-12 w-full">
                   <Image
                     src={partner.logo}
                     alt={partner.name}
                     fill
                     className="object-contain"
+                    style={{ objectPosition: partner.objectPosition ?? "center" }}
                   />
                 </div>
-              ) : (
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold text-foreground leading-snug">
-                    {partner.name}
-                  </span>
-                  <span className="mt-1 text-xs text-muted leading-snug">
-                    {partner.tagline}
-                  </span>
-                </div>
               )}
+              <div className="flex flex-col items-center text-center">
+                <span className="text-sm font-semibold text-foreground leading-snug">
+                  {partner.name}
+                </span>
+                <span className="mt-0.5 text-xs text-muted leading-snug">
+                  {partner.tagline}
+                </span>
+              </div>
             </a>
           ))}
         </div>

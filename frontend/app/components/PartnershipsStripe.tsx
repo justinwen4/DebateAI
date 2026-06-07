@@ -1,28 +1,42 @@
-const partners = [
+import Image from "next/image";
+
+const partners: {
+  name: string;
+  tagline: string;
+  href: string;
+  logo?: string;
+  darkLogo?: boolean;
+}[] = [
   {
     name: "Circuit Skillbuilder",
     tagline: "Free resources for the debate community",
     href: "https://circuitskillbuilder.org/",
+    logo: "/logo-circuit-skillbuilder.png",
+    darkLogo: true,
   },
   {
     name: "Kritikal Discussions",
     tagline: "Making progressive debate accessible",
     href: "https://www.kritikaldiscussions.com/home",
+    logo: "/logo-kritikal-discussions.png",
   },
   {
     name: "Champ Camp",
     tagline: "Elite LD summer intensive",
     href: "https://www.campchampion.org/",
+    logo: "/logo-champ-camp.png",
   },
   {
     name: "CME Strategy",
     tagline: "Coaching for the national circuit",
     href: "https://www.cmestrategy.org/",
+    logo: "/logo-cme-strategy.png",
   },
   {
     name: "Strake Jesuit Debate",
     tagline: "One of the nation's top debate programs",
     href: "https://www.strakejesuit.org/student-life/student-activities/debate",
+    logo: "/logo-strake-jesuit.png",
   },
 ];
 
@@ -48,14 +62,30 @@ export default function PartnershipsStripe() {
               href={partner.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex min-w-[220px] flex-col justify-center rounded-xl border border-border bg-surface px-5 py-4 shadow-[var(--shadow-sm)] transition-all duration-200 hover:border-accent/40 hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5"
+              className={`flex min-w-[220px] items-center justify-center rounded-xl border px-5 py-4 shadow-[var(--shadow-sm)] transition-all duration-200 hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5 ${
+                partner.darkLogo
+                  ? "border-neutral-700 bg-[#1a1614] hover:border-neutral-500"
+                  : "border-border bg-surface hover:border-accent/40"
+              }`}
             >
-              <span className="text-sm font-semibold text-foreground leading-snug">
-                {partner.name}
-              </span>
-              <span className="mt-1 text-xs text-muted leading-snug">
-                {partner.tagline}
-              </span>
+              {partner.logo ? (
+                <Image
+                  src={partner.logo}
+                  alt={partner.name}
+                  width={140}
+                  height={48}
+                  className="object-contain max-h-12"
+                />
+              ) : (
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-foreground leading-snug">
+                    {partner.name}
+                  </span>
+                  <span className="mt-1 text-xs text-muted leading-snug">
+                    {partner.tagline}
+                  </span>
+                </div>
+              )}
             </a>
           ))}
         </div>

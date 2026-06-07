@@ -104,9 +104,9 @@ export default function ChatArea({
         onFeedback={onFeedback}
       />
       {messages.length === 0 ? (
-        <StarterQuestions onSelect={onSendMessage} disabled={loading} />
+        <StarterQuestions onSelect={onSendMessage} disabled={loading || !!streamingMessageId} />
       ) : null}
-      <InputBar input={input} setInput={setInput} onSend={onSend} loading={loading} />
+      <InputBar input={input} setInput={setInput} onSend={onSend} loading={loading || !!streamingMessageId} />
     </main>
   );
 }

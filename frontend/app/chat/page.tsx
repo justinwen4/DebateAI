@@ -285,6 +285,7 @@ export default function ChatPage() {
       };
 
       const reveal = createSmoothStreamReveal(syncBotMessage);
+      let doneReceived = false;
 
       try {
         for await (const event of streamGenerate({ prompt: trimmed, history })) {
@@ -307,6 +308,7 @@ export default function ChatPage() {
           }
 
           if (event.type === "done") {
+            doneReceived = true;
             reveal.flush();
             setStreamingMessageId(null);
 
@@ -321,10 +323,6 @@ export default function ChatPage() {
               });
             }
 
-            if (!streamStarted) {
-              setLoading(false);
-            }
-
             const finalText = reveal.getTarget();
             try {
               await persistMessage(conversationId, "assistant", finalText);
@@ -332,6 +330,24 @@ export default function ChatPage() {
               // Keep local response even if persistence fails.
             }
             if (isFirstExchange && finalText) {
+              void generateConversationTitle(conversationId, trimmed, finalText);
+            }
+          }
+        }
+
+        // Stream ended without a done event (network drop, server timeout, etc.).
+        // Persist whatever text was accumulated so the reply isn't lost on reload.
+        if (streamStarted && !doneReceived) {
+          reveal.flush();
+          setStreamingMessageId(null);
+          const finalText = reveal.getTarget();
+          if (finalText) {
+            try {
+              await persistMessage(conversationId, "assistant", finalText);
+            } catch {
+              // Keep local response even if persistence fails.
+            }
+            if (isFirstExchange) {
               void generateConversationTitle(conversationId, trimmed, finalText);
             }
           }

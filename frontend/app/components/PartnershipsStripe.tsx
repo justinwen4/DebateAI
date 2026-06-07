@@ -49,7 +49,7 @@ export default function PartnershipsStripe() {
   const items = [...partners, ...partners];
 
   return (
-    <section className="border-y border-border-subtle bg-surface/60 py-10 overflow-hidden">
+    <section className="py-10 overflow-hidden">
       <div className="mx-auto max-w-6xl px-6 mb-6 text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-accent">
           Partnerships
@@ -60,17 +60,19 @@ export default function PartnershipsStripe() {
       </div>
 
       <div className="relative overflow-hidden">
-        <div className="marquee-track flex w-max gap-4">
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-[var(--color-surface,theme(colors.white))] to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-[var(--color-surface,theme(colors.white))] to-transparent" />
+        <div className="marquee-track flex w-max items-center gap-14">
           {items.map((partner, i) => (
             <a
               key={i}
               href={partner.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex min-w-[220px] flex-col items-center gap-3 rounded-xl border border-border bg-surface px-5 py-4 shadow-[var(--shadow-sm)] transition-all duration-200 hover:border-accent/40 hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5"
+              className="flex flex-col items-center gap-2 opacity-70 transition-opacity duration-200 hover:opacity-100"
             >
               {partner.logo && (
-                <div className="relative h-12 w-full">
+                <div className="relative h-10 w-32">
                   <Image
                     src={partner.logo}
                     alt={partner.name}
@@ -81,10 +83,10 @@ export default function PartnershipsStripe() {
                 </div>
               )}
               <div className="flex flex-col items-center text-center">
-                <span className="text-sm font-semibold text-foreground leading-snug">
+                <span className="text-xs font-semibold text-foreground leading-snug">
                   {partner.name}
                 </span>
-                <span className="mt-0.5 text-xs text-muted leading-snug">
+                <span className="text-[11px] text-muted leading-snug">
                   {partner.tagline}
                 </span>
               </div>

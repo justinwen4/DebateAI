@@ -24,12 +24,19 @@ interface TitleApiResponse {
   title: string;
 }
 
-function persistMessage(conversationId: string, role: "user" | "assistant", content: string) {
-  void supabase.from("messages").insert({
-    conversation_id: conversationId,
-    role,
-    content,
+async function persistMessage(conversationId: string, role: "user" | "assistant", content: string) {
+  const trimmed = content.trim();
+  if (!trimmed) return;
+
+  const res = await apiFetch(`/conversations/${conversationId}/messages`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ role, content: trimmed }),
   });
+
+  if (!res.ok) {
+    throw new Error(`Failed to save message (${res.status})`);
+  }
 }
 
 export default function ChatPage() {
@@ -205,8 +212,8 @@ export default function ChatPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            user_message: userMessage,
-            assistant_message: assistantMessage,
+            user_message: userMessage.slice(0, 500),
+            assistant_message: assistantMessage.slice(0, 500),
           }),
         });
 
@@ -248,7 +255,11 @@ export default function ChatPage() {
       setInput("");
       setLoading(true);
 
-      void persistMessage(conversationId, "user", trimmed);
+      try {
+        await persistMessage(conversationId, "user", trimmed);
+      } catch {
+        // Keep chatting even if persistence fails; message is still in local state.
+      }
 
       if (isFirstExchange) {
         const title = provisionalConversationTitle(trimmed);
@@ -315,7 +326,11 @@ export default function ChatPage() {
             }
 
             const finalText = reveal.getTarget();
-            void persistMessage(conversationId, "assistant", finalText);
+            try {
+              await persistMessage(conversationId, "assistant", finalText);
+            } catch {
+              // Keep local response even if persistence fails.
+            }
             if (isFirstExchange && finalText) {
               void generateConversationTitle(conversationId, trimmed, finalText);
             }
@@ -337,7 +352,11 @@ export default function ChatPage() {
             { id: botId, role: "assistant", content: fallbackText },
           ]);
         }
-        void persistMessage(conversationId, "assistant", fallbackText);
+        try {
+          await persistMessage(conversationId, "assistant", fallbackText);
+        } catch {
+          // Keep local error message even if persistence fails.
+        }
       } finally {
         setLoading(false);
         setStreamingMessageId(null);

@@ -32,6 +32,7 @@ from services.limits import (
     GENERATE_DAILY_LIMIT,
     MAX_FEEDBACK_NOTES_CHARS,
     MAX_FEEDBACK_TEXT_CHARS,
+    MAX_MESSAGE_CHARS,
     MAX_PROMPT_CHARS,
     MAX_TRAINING_AREA_CHARS,
     MAX_TRAINING_FILE_BYTES,
@@ -178,6 +179,11 @@ async def generate(
     )
 
 
+class MessageCreateRequest(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(..., min_length=1, max_length=MAX_MESSAGE_CHARS)
+
+
 class TitleRequest(BaseModel):
     user_message: str = Field(..., min_length=1, max_length=500)
     assistant_message: str = Field(..., min_length=1, max_length=500)
@@ -185,6 +191,46 @@ class TitleRequest(BaseModel):
 
 class TitleResponse(BaseModel):
     title: str
+
+
+@app.post("/conversations/{conversation_id}/messages")
+@limiter.limit("500/hour")
+async def create_conversation_message(
+    request: Request,
+    conversation_id: str,
+    req: MessageCreateRequest,
+    user: AuthUser = Depends(require_user),
+):
+    supabase = _get_supabase()
+    try:
+        conv = (
+            supabase.table("conversations")
+            .select("id")
+            .eq("id", conversation_id)
+            .eq("user_id", user.id)
+            .maybe_single()
+            .execute()
+        )
+    except Exception:
+        logger.exception("conversation lookup failed user=%s conv=%s", user.id, conversation_id)
+        raise HTTPException(status_code=500, detail="Failed to save message") from None
+
+    if not conv.data:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    try:
+        supabase.table("messages").insert(
+            {
+                "conversation_id": conversation_id,
+                "role": req.role,
+                "content": req.content.strip(),
+            }
+        ).execute()
+    except Exception:
+        logger.exception("message insert failed user=%s conv=%s", user.id, conversation_id)
+        raise HTTPException(status_code=500, detail="Failed to save message") from None
+
+    return {"status": "ok"}
 
 
 @app.post("/generate-title", response_model=TitleResponse)

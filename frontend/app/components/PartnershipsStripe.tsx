@@ -49,6 +49,12 @@ const partners: {
     href: "https://www.peptalkdebate.org/",
     logo: "/logo-peptalk-debate.png",
   },
+  {
+    name: "Haku",
+    tagline: "Debate card search engine.",
+    href: "https://haku.cards/",
+    logo: "/logo-haku.png",
+  },
 ];
 
 export default function PartnershipsStripe() {

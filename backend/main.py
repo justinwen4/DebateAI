@@ -346,12 +346,8 @@ async def training_request(
     try:
         _get_supabase().table("training_requests").insert(payload).execute()
     except Exception:
-        payload.pop("user_id", None)
-        try:
-            _get_supabase().table("training_requests").insert(payload).execute()
-        except Exception:
-            logger.exception("training request failed user=%s", user.id)
-            raise HTTPException(status_code=500, detail="Failed to save training request") from None
+        logger.exception("training request failed user=%s", user.id)
+        raise HTTPException(status_code=500, detail="Failed to save training request") from None
     return {"status": "ok"}
 
 
@@ -374,14 +370,6 @@ async def feedback(
     try:
         _get_supabase().table("feedback").insert(payload).execute()
     except Exception:
-        payload.pop("user_id", None)
-        try:
-            _get_supabase().table("feedback").insert(payload).execute()
-        except Exception:
-            payload.pop("curation_eligible", None)
-            try:
-                _get_supabase().table("feedback").insert(payload).execute()
-            except Exception:
-                logger.exception("feedback failed user=%s", user.id)
-                raise HTTPException(status_code=500, detail="Failed to save feedback") from None
+        logger.exception("feedback failed user=%s", user.id)
+        raise HTTPException(status_code=500, detail="Failed to save feedback") from None
     return {"status": "ok"}

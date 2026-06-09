@@ -63,21 +63,29 @@ def _embedding_text(row: dict) -> str:
 
 
 def _needs_reseed(path: Path) -> bool:
+    """Whether the stored dataset hash differs from the file's.
+
+    Raises on a metadata read failure so the caller can keep the existing
+    embeddings instead of treating a transient DB error as "reseed everything"
+    (which would wipe the whole store). A missing metadata row (fresh DB) is a
+    successful read returning no value, so it correctly signals a reseed.
+    """
     current_hash = _dataset_fingerprint(path)
-    try:
-        result = (
-            _get_supabase()
-            .table("rag_metadata")
-            .select("value")
-            .eq("key", "dataset_hash")
-            .maybe_single()
-            .execute()
-        )
-        if result and result.data and result.data.get("value") == current_hash:
-            return False
-    except Exception:
-        pass
-    return True
+    result = (
+        _get_supabase()
+        .table("rag_metadata")
+        .select("value")
+        .eq("key", "dataset_hash")
+        .maybe_single()
+        .execute()
+    )
+    stored = result.data.get("value") if result and result.data else None
+    return stored != current_hash
+
+
+def _embedding_count() -> int:
+    result = _get_supabase().table("rag_embeddings").select("id", count="exact").execute()
+    return result.count or 0
 
 
 def _seed_from_dataset_unlocked() -> int:
@@ -87,9 +95,15 @@ def _seed_from_dataset_unlocked() -> int:
         logger.info("[rag] dataset.tutor.jsonl not found — skipping seed, using existing Supabase data")
         return 0
 
-    if not _needs_reseed(path):
-        result = _get_supabase().table("rag_embeddings").select("id", count="exact").execute()
-        count = result.count or 0
+    try:
+        needs_reseed = _needs_reseed(path)
+    except Exception:
+        # Transient DB error reading the hash — never wipe good embeddings over it.
+        logger.exception("[rag] reseed check failed; keeping existing Supabase embeddings")
+        return _embedding_count()
+
+    if not needs_reseed:
+        count = _embedding_count()
         logger.info("[rag] dataset unchanged, %d embeddings already in Supabase", count)
         return count
 
@@ -97,13 +111,14 @@ def _seed_from_dataset_unlocked() -> int:
     lines = path.read_text().strip().splitlines()
     rows_parsed = [json.loads(line) for line in lines]
 
-    sb = _get_supabase()
-    sb.table("rag_embeddings").delete().neq("id", "").execute()
-
+    # Embed everything BEFORE touching the store: embedding calls hit OpenAI and
+    # are the most likely thing to fail, so computing them first means a failure
+    # leaves the existing embeddings intact rather than wiping them first.
+    records = []
     for batch_start in range(0, len(rows_parsed), EMBED_BATCH_SIZE):
         batch = rows_parsed[batch_start : batch_start + EMBED_BATCH_SIZE]
         embeddings = _embed_batch([_embedding_text(r) for r in batch])
-        records = [
+        records.extend(
             {
                 "id": f"doc_{batch_start + i}",
                 "input": r["input"],
@@ -111,14 +126,18 @@ def _seed_from_dataset_unlocked() -> int:
                 "embedding": emb,
             }
             for i, (r, emb) in enumerate(zip(batch, embeddings))
-        ]
-        sb.table("rag_embeddings").upsert(records).execute()
-        logger.info("[rag] seeded batch %d–%d", batch_start, batch_start + len(batch) - 1)
+        )
+        logger.info("[rag] embedded batch %d–%d", batch_start, batch_start + len(batch) - 1)
+
+    sb = _get_supabase()
+    sb.table("rag_embeddings").delete().neq("id", "").execute()
+    for batch_start in range(0, len(records), EMBED_BATCH_SIZE):
+        sb.table("rag_embeddings").upsert(records[batch_start : batch_start + EMBED_BATCH_SIZE]).execute()
 
     current_hash = _dataset_fingerprint(path)
     sb.table("rag_metadata").upsert({"key": "dataset_hash", "value": current_hash}).execute()
-    logger.info("[rag] seeded %d embeddings total", len(rows_parsed))
-    return len(rows_parsed)
+    logger.info("[rag] seeded %d embeddings total", len(records))
+    return len(records)
 
 
 def seed_from_dataset() -> int:

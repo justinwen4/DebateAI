@@ -10,29 +10,37 @@ type CallbackState =
   | { kind: "already_confirmed" }
   | { kind: "error"; message: string };
 
+function initialCallbackState(): CallbackState {
+  if (typeof window === "undefined") return { kind: "verifying" };
+
+  const hash = window.location.hash;
+  const hashParams = new URLSearchParams(hash.startsWith("#") ? hash.slice(1) : hash);
+  const hashErrorCode = hashParams.get("error_code");
+  const hashError = hashParams.get("error");
+  const hashErrorDescription = hashParams.get("error_description");
+
+  if (hashErrorCode === "otp_expired" || hashError === "access_denied") {
+    return { kind: "already_confirmed" };
+  }
+
+  if (hashErrorDescription) {
+    return { kind: "error", message: hashErrorDescription.replace(/\+/g, " ") };
+  }
+
+  return { kind: "verifying" };
+}
+
 function CallbackHandler() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [state, setState] = useState<CallbackState>({ kind: "verifying" });
+  const [state, setState] = useState<CallbackState>(initialCallbackState);
 
   useEffect(() => {
     let cancelled = false;
 
     const next = searchParams.get("next") ?? "/chat";
 
-    const hash = typeof window !== "undefined" ? window.location.hash : "";
-    const hashParams = new URLSearchParams(hash.startsWith("#") ? hash.slice(1) : hash);
-    const hashErrorCode = hashParams.get("error_code");
-    const hashError = hashParams.get("error");
-    const hashErrorDescription = hashParams.get("error_description");
-
-    if (hashErrorCode === "otp_expired" || hashError === "access_denied") {
-      setState({ kind: "already_confirmed" });
-      return;
-    }
-
-    if (hashErrorDescription) {
-      setState({ kind: "error", message: hashErrorDescription.replace(/\+/g, " ") });
+    if (state.kind !== "verifying") {
       return;
     }
 
@@ -69,7 +77,7 @@ function CallbackHandler() {
     return () => {
       cancelled = true;
     };
-  }, [router, searchParams]);
+  }, [router, searchParams, state.kind]);
 
   if (state.kind === "already_confirmed") {
     return (

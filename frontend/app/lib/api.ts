@@ -8,7 +8,16 @@ function normalizeApiUrl(raw: string): string {
   return `https://${trimmed}`;
 }
 
-const API_URL = normalizeApiUrl(process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000");
+function resolveApiUrl(): string {
+  const raw = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (raw) return normalizeApiUrl(raw);
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("NEXT_PUBLIC_API_URL is required in production builds");
+  }
+  return "http://localhost:8000";
+}
+
+const API_URL = resolveApiUrl();
 
 async function getAccessToken(): Promise<string> {
   const {

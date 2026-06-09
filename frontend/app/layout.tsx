@@ -20,14 +20,16 @@ const playfairDisplay = Playfair_Display({
   subsets: ["latin"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://debateai.dev";
+
 export const metadata: Metadata = {
   title: "DebateAI",
   description: "Debate Analytics Assistant — elite competitive debate analytics on demand",
-  metadataBase: new URL("https://debateai.dev"),
+  metadataBase: new URL(siteUrl),
   openGraph: {
     title: "DebateAI",
     description: "Debate Analytics Assistant — elite competitive debate analytics on demand",
-    url: "https://debateai.dev",
+    url: siteUrl,
     siteName: "DebateAI",
     images: [
       {

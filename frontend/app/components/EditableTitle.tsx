@@ -32,12 +32,6 @@ export default function EditableTitle({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!editing) {
-      setDraft(value);
-    }
-  }, [editing, value]);
-
-  useEffect(() => {
     if (editing) {
       inputRef.current?.focus();
       inputRef.current?.select();

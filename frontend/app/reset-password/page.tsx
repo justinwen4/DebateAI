@@ -1,11 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogoWithLabel } from "@/app/components/Logo";
-import ThemeToggle from "@/app/components/ThemeToggle";
 import { supabase } from "@/app/lib/supabase";
+import { AuthError, AuthField, AuthShell, AuthSubmitButton } from "@/app/components/AuthShell";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -38,68 +36,41 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <main className="min-h-full bg-background px-6 py-10">
-      <div className="mx-auto w-full max-w-md">
-        <div className="mb-8 flex items-center justify-between">
-          <Link href="/">
-            <LogoWithLabel labelClassName="text-[15px] font-semibold tracking-tight text-foreground" />
-          </Link>
-          <ThemeToggle />
-        </div>
+    <AuthShell>
+      <h1 className="font-[family-name:var(--font-display)] text-4xl leading-none tracking-tight text-foreground">
+        New password
+      </h1>
+      <p className="mt-2 text-sm text-muted">Choose a new password for your account.</p>
 
-        <div className="rounded-2xl border border-border bg-surface p-6 shadow-[var(--shadow-md)]">
-          <h1 className="font-[family-name:var(--font-display)] text-4xl leading-none tracking-tight text-foreground">
-            New password
-          </h1>
-          <p className="mt-2 text-sm text-muted">Choose a new password for your account.</p>
+      <form onSubmit={onSubmit} className="mt-6 space-y-4">
+        <AuthField
+          id="password"
+          label="New password"
+          type="password"
+          autoComplete="new-password"
+          value={password}
+          onChange={setPassword}
+          required
+          minLength={6}
+          placeholder="At least 6 characters"
+        />
 
-          <form onSubmit={onSubmit} className="mt-6 space-y-4">
-            <div className="space-y-1.5">
-              <label htmlFor="password" className="text-sm font-medium text-foreground">
-                New password
-              </label>
-              <input
-                id="password"
-                type="password"
-                autoComplete="new-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-                minLength={6}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted focus:border-accent"
-                placeholder="At least 6 characters"
-              />
-            </div>
+        <AuthField
+          id="confirm"
+          label="Confirm password"
+          type="password"
+          autoComplete="new-password"
+          value={confirm}
+          onChange={setConfirm}
+          required
+          minLength={6}
+          placeholder="Re-enter your password"
+        />
 
-            <div className="space-y-1.5">
-              <label htmlFor="confirm" className="text-sm font-medium text-foreground">
-                Confirm password
-              </label>
-              <input
-                id="confirm"
-                type="password"
-                autoComplete="new-password"
-                value={confirm}
-                onChange={(event) => setConfirm(event.target.value)}
-                required
-                minLength={6}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted focus:border-accent"
-                placeholder="Re-enter your password"
-              />
-            </div>
+        <AuthError message={error} />
 
-            {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {submitting ? "Saving..." : "Set new password"}
-            </button>
-          </form>
-        </div>
-      </div>
-    </main>
+        <AuthSubmitButton submitting={submitting} idleLabel="Set new password" busyLabel="Saving..." />
+      </form>
+    </AuthShell>
   );
 }

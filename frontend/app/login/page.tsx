@@ -3,10 +3,18 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogoWithLabel } from "@/app/components/Logo";
-import ThemeToggle from "@/app/components/ThemeToggle";
 import { useAuth } from "@/app/context/AuthContext";
 import { supabase } from "@/app/lib/supabase";
+import { AuthError, AuthField, AuthLoading, AuthShell, AuthSubmitButton } from "@/app/components/AuthShell";
+
+/** Validated post-login destination from `?next=` (set by the route guard).
+ * Only same-site absolute paths are allowed — never protocol-relative URLs. */
+function safeNextPath(): string {
+  if (typeof window === "undefined") return "/chat";
+  const next = new URLSearchParams(window.location.search).get("next");
+  if (next && next.startsWith("/") && !next.startsWith("//")) return next;
+  return "/chat";
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,7 +26,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!authLoading && user) {
-      router.replace("/chat");
+      router.replace(safeNextPath());
     }
   }, [authLoading, router, user]);
 
@@ -40,96 +48,63 @@ export default function LoginPage() {
       return;
     }
 
-    router.replace("/chat");
+    router.replace(safeNextPath());
   };
 
   if (authLoading || user) {
-    return (
-      <main className="h-full grid place-items-center bg-background px-6">
-        <div className="rounded-xl border border-border bg-surface px-6 py-4 text-sm text-muted shadow-[var(--shadow-sm)]">
-          Loading...
-        </div>
-      </main>
-    );
+    return <AuthLoading />;
   }
 
   return (
-    <main className="min-h-full bg-background px-6 py-10">
-      <div className="mx-auto w-full max-w-md">
-        <div className="mb-8 flex items-center justify-between">
-          <Link href="/">
-            <LogoWithLabel labelClassName="text-[15px] font-semibold tracking-tight text-foreground" />
-          </Link>
-          <ThemeToggle />
-        </div>
+    <AuthShell>
+      <h1 className="font-[family-name:var(--font-display)] text-4xl leading-none tracking-tight text-foreground">
+        Log in
+      </h1>
+      <p className="mt-2 text-sm text-muted">Continue to your debate workspace.</p>
 
-        <div className="rounded-2xl border border-border bg-surface p-6 shadow-[var(--shadow-md)]">
-          <h1 className="font-[family-name:var(--font-display)] text-4xl leading-none tracking-tight text-foreground">
-            Log in
-          </h1>
-          <p className="mt-2 text-sm text-muted">Continue to your debate workspace.</p>
+      <form onSubmit={onSubmit} className="mt-6 space-y-4">
+        <AuthField
+          id="email"
+          label="Email"
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={setEmail}
+          required
+          placeholder="you@school.edu"
+        />
 
-          <form onSubmit={onSubmit} className="mt-6 space-y-4">
-            <div className="space-y-1.5">
-              <label htmlFor="email" className="text-sm font-medium text-foreground">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-                className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted focus:border-accent"
-                placeholder="you@school.edu"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label htmlFor="password" className="text-sm font-medium text-foreground">
-                  Password
-                </label>
-                <Link
-                  href="/forgot-password"
-                  className="text-xs text-muted underline-offset-4 hover:underline"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-              <input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-                className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted focus:border-accent"
-                placeholder="Enter your password"
-              />
-            </div>
-
-            {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-70"
+        <AuthField
+          id="password"
+          label="Password"
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={setPassword}
+          required
+          placeholder="Enter your password"
+          labelAccessory={
+            <Link
+              href="/forgot-password"
+              className="text-xs text-muted underline-offset-4 hover:underline"
             >
-              {submitting ? "Logging in..." : "Log in"}
-            </button>
-          </form>
-
-          <p className="mt-5 text-sm text-muted">
-            New here?{" "}
-            <Link href="/signup" className="font-medium text-foreground underline-offset-4 hover:underline">
-              Create an account
+              Forgot password?
             </Link>
-            .
-          </p>
-        </div>
-      </div>
-    </main>
+          }
+        />
+
+        <AuthError message={error} />
+
+        <AuthSubmitButton submitting={submitting} idleLabel="Log in" busyLabel="Logging in..." />
+      </form>
+
+      <p className="mt-5 text-sm text-muted">
+        New here?{" "}
+        <Link href="/signup" className="font-medium text-foreground underline-offset-4 hover:underline">
+          Create an account
+        </Link>
+        .
+      </p>
+    </AuthShell>
   );
 }

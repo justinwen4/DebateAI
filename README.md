@@ -25,7 +25,7 @@ cp .env.example .env   # add your keys (see below)
 uvicorn main:app --reload
 ```
 
-The API runs at `http://localhost:8000`. On startup it seeds the vector store from `ml/dataset.tutor.jsonl` (not in git — add your corpus locally).
+The API runs at `http://localhost:8000`. On startup it seeds the vector store from `ml/dataset.tutor.jsonl` if present (private dataset, not in git). When the file is absent — e.g. in production — the backend serves from the already-seeded Supabase pgvector data. To (re)seed after editing the dataset, place the file locally and start the backend (or run `python backend/seed_rag.py`) with the target Supabase credentials in `backend/.env`.
 
 **Backend `.env` variables:**
 
@@ -130,7 +130,7 @@ Product metrics are computed from Supabase `messages`, `conversations`, `auth.us
     rag.py             # Supabase pgvector retrieval
 /frontend              # Next.js chat UI (Supabase auth)
 /ml
-  dataset.tutor.jsonl  # debate training data (gitignored)
+  dataset.tutor.jsonl  # debate training data (private — local only, seeds the RAG store)
   llm_utils.py         # shared LLM retry helpers
   prompts.py           # rewrite prompts for curation
   train.py             # LoRA fine-tuning scaffold

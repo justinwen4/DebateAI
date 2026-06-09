@@ -16,6 +16,10 @@ node_modules/
 
 # LoRA adapter weights (large binary files — stored in Google Drive / HuggingFace)
 ml/output/
+
+# Tutor dataset — private IP, intentionally NOT in git or the Docker image.
+# The backend boots without it (rag.py uses the already-seeded pgvector data);
+# to (re)seed, place the file locally and run the backend or seed_rag.py.
 ml/dataset.tutor.jsonl
 
 # ML pipeline generated artifacts

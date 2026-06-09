@@ -129,10 +129,25 @@ def _seed_from_dataset_unlocked() -> int:
         )
         logger.info("[rag] embedded batch %d–%d", batch_start, batch_start + len(batch) - 1)
 
+    # Upsert the new records first, then delete only rows no longer in the
+    # dataset (ids are deterministic: doc_{index}). Doing it in this order means
+    # there is never a window where the store is empty — unlike delete-then-insert.
+    # In steady state (same row count) there are no stale ids, so no delete fires
+    # and upserts overwrite in place. Stale deletes are batched so the request
+    # URL stays bounded as the dataset grows.
     sb = _get_supabase()
-    sb.table("rag_embeddings").delete().neq("id", "").execute()
+    existing = sb.table("rag_embeddings").select("id").execute()
+    existing_ids = {row["id"] for row in (existing.data or [])}
+
     for batch_start in range(0, len(records), EMBED_BATCH_SIZE):
         sb.table("rag_embeddings").upsert(records[batch_start : batch_start + EMBED_BATCH_SIZE]).execute()
+
+    new_ids = {r["id"] for r in records}
+    stale_ids = list(existing_ids - new_ids)
+    for batch_start in range(0, len(stale_ids), EMBED_BATCH_SIZE):
+        sb.table("rag_embeddings").delete().in_(
+            "id", stale_ids[batch_start : batch_start + EMBED_BATCH_SIZE]
+        ).execute()
 
     current_hash = _dataset_fingerprint(path)
     sb.table("rag_metadata").upsert({"key": "dataset_hash", "value": current_hash}).execute()

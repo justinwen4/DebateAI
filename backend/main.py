@@ -25,7 +25,7 @@ from supabase import Client, create_client
 
 load_dotenv()
 
-from services.auth import AuthUser, require_user
+from services.auth import AuthUser, ensure_auth_configured, require_user
 from services.training_files import extract_training_file_text, upload_training_file
 from services.limits import (
     FEEDBACK_DAILY_LIMIT,
@@ -46,7 +46,7 @@ from services.limits import (
 from services.llm import generate_title, stream_generate_response_sync
 from services.metrics import fetch_product_metrics, is_admin_configured, verify_admin_key
 from services.rag import retrieve, seed_from_dataset
-from services.usage import get_monthly_count, pick_model_for_generation, record_generation
+from services.usage import refund_generation, reserve_generation
 
 _supabase: Client | None = None
 
@@ -69,6 +69,7 @@ _is_production = os.environ.get("ENVIRONMENT", "development").lower() == "produc
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    ensure_auth_configured()
     count = await asyncio.to_thread(seed_from_dataset)
     logger.info("[rag] %d documents in vector store", count)
     yield
@@ -121,24 +122,35 @@ async def generate(
     req: GenerateRequest,
     user: AuthUser = Depends(require_user),
 ):
-    enforce_rate_limit(user.id, "generate", GENERATE_DAILY_LIMIT)
+    supabase = _get_supabase()
+    await enforce_rate_limit(supabase, user.id, "generate", GENERATE_DAILY_LIMIT)
     valid_history = validate_history(req.history)
     prompt = req.prompt.strip()
-    supabase = _get_supabase()
 
     try:
-        current_count, context = await asyncio.gather(
-            asyncio.to_thread(get_monthly_count, supabase, user.id),
+        # Reserve the generation atomically BEFORE generating: the model tier
+        # is decided by the count this request claimed, so concurrent requests
+        # cannot both slip under the premium cap.
+        (monthly_usage, model, notice), context = await asyncio.gather(
+            asyncio.to_thread(reserve_generation, supabase, user.id),
             retrieve(prompt, slot_query=prompt),
         )
-        model, notice = pick_model_for_generation(current_count)
     except HTTPException:
         raise
     except Exception:
         logger.exception("generate prep failed user=%s", user.id)
         raise HTTPException(status_code=500, detail="Generation failed") from None
 
+    model_tier: Literal["premium", "standard"] = (
+        "premium" if monthly_usage <= SONNET_MONTHLY_LIMIT else "standard"
+    )
+
     def event_stream():
+        # If the client disconnects mid-stream, the server raises GeneratorExit
+        # at the next yield; exiting the `with` block inside
+        # stream_generate_response_sync aborts the Anthropic stream so we stop
+        # paying for tokens nobody is reading. The reservation is NOT refunded
+        # on disconnect (tokens were spent) — only on server-side failure.
         try:
             for chunk in stream_generate_response_sync(
                 prompt,
@@ -148,25 +160,21 @@ async def generate(
             ):
                 if chunk:
                     yield _sse_event({"type": "chunk", "text": chunk})
-
-            monthly_usage = record_generation(supabase, user.id)
-            model_tier: Literal["premium", "standard"] = (
-                "premium" if monthly_usage <= SONNET_MONTHLY_LIMIT else "standard"
-            )
-            yield _sse_event(
-                {
-                    "type": "done",
-                    "model_tier": model_tier,
-                    "monthly_usage": monthly_usage,
-                    "premium_monthly_limit": SONNET_MONTHLY_LIMIT,
-                    "notice": notice,
-                }
-            )
-        except HTTPException as exc:
-            yield _sse_event({"type": "error", "detail": str(exc.detail), "status": exc.status_code})
         except Exception:
             logger.exception("generate stream failed user=%s", user.id)
+            refund_generation(supabase, user.id)
             yield _sse_event({"type": "error", "detail": "Generation failed", "status": 500})
+            return
+
+        yield _sse_event(
+            {
+                "type": "done",
+                "model_tier": model_tier,
+                "monthly_usage": monthly_usage,
+                "premium_monthly_limit": SONNET_MONTHLY_LIMIT,
+                "notice": notice,
+            }
+        )
 
     return StreamingResponse(
         event_stream(),
@@ -240,7 +248,7 @@ async def generate_conversation_title(
     req: TitleRequest,
     user: AuthUser = Depends(require_user),
 ):
-    enforce_rate_limit(user.id, "generate_title", TITLE_DAILY_LIMIT)
+    await enforce_rate_limit(_get_supabase(), user.id, "generate_title", TITLE_DAILY_LIMIT)
     fallback = req.user_message.strip()[:MAX_TITLE_CHARS]
     try:
         title = await generate_title(
@@ -297,7 +305,7 @@ async def training_request(
     file: UploadFile | None = File(default=None),
     user: AuthUser = Depends(require_user),
 ):
-    enforce_rate_limit(user.id, "training-request", TRAINING_DAILY_LIMIT)
+    await enforce_rate_limit(_get_supabase(), user.id, "training-request", TRAINING_DAILY_LIMIT)
     area = area.strip()
     if not area:
         raise HTTPException(status_code=400, detail="Area description is required")
@@ -350,7 +358,7 @@ async def feedback(
     req: FeedbackRequest,
     user: AuthUser = Depends(require_user),
 ):
-    enforce_rate_limit(user.id, "feedback", FEEDBACK_DAILY_LIMIT)
+    await enforce_rate_limit(_get_supabase(), user.id, "feedback", FEEDBACK_DAILY_LIMIT)
     payload = {
         "prompt": req.prompt,
         "bad_output": req.output,

@@ -1,9 +1,11 @@
+import asyncio
+import logging
 import os
-import threading
-import time
-from collections import defaultdict
 
 from fastapi import HTTPException
+from supabase import Client
+
+logger = logging.getLogger(__name__)
 
 MAX_PROMPT_CHARS = int(os.environ.get("MAX_PROMPT_CHARS", "8000"))
 MAX_MESSAGE_CHARS = int(os.environ.get("MAX_MESSAGE_CHARS", "4000"))
@@ -30,19 +32,33 @@ DOWNGRADE_NOTICE = (
     "Continuing on our standard model (Haiku) until your limit resets."
 )
 
-_rate_lock = threading.Lock()
-_rate_windows: dict[tuple[str, str], list[float]] = defaultdict(list)
+async def enforce_rate_limit(supabase: Client, user_id: str, action: str, max_count: int) -> None:
+    """Atomically consume one unit of the user's daily quota for `action`.
 
+    Backed by the `consume_daily_quota` RPC (UTC day buckets in
+    `user_daily_usage`), so limits survive restarts and are shared across
+    workers/replicas. Fails open on infrastructure errors — the slowapi
+    per-IP hourly limits remain as a backstop.
+    """
 
-def enforce_rate_limit(user_id: str, action: str, max_count: int, window_seconds: int = 86_400) -> None:
-    key = (user_id, action)
-    now = time.time()
-    with _rate_lock:
-        recent = [timestamp for timestamp in _rate_windows[key] if timestamp > now - window_seconds]
-        if len(recent) >= max_count:
-            raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again later.")
-        recent.append(now)
-        _rate_windows[key] = recent
+    def _consume() -> bool:
+        response = supabase.rpc(
+            "consume_daily_quota",
+            {"p_user_id": user_id, "p_action": action, "p_max_count": max_count},
+        ).execute()
+        allowed = response.data
+        if isinstance(allowed, list):
+            allowed = allowed[0] if allowed else False
+        return bool(allowed)
+
+    try:
+        allowed = await asyncio.to_thread(_consume)
+    except Exception:
+        logger.exception("rate limit check failed user=%s action=%s — allowing request", user_id, action)
+        return
+
+    if not allowed:
+        raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again later.")
 
 
 def validate_history(history: list[dict[str, str]] | None) -> list[dict[str, str]]:

@@ -17,6 +17,8 @@ A chatbot that generates high-quality, natural-sounding debate analytics in the 
 
 ### 1. Backend
 
+The backend is designed to run via Docker/Railway. For local development you can also use a venv:
+
 ```bash
 cd backend
 python -m venv .venv && source .venv/bin/activate
@@ -29,12 +31,18 @@ The API runs at `http://localhost:8000`. On startup it seeds the vector store fr
 
 **Backend `.env` variables:**
 
-| Variable | Purpose |
-|----------|---------|
-| `ANTHROPIC_API_KEY` | Claude generation |
-| `SUPABASE_URL` | Feedback storage |
-| `SUPABASE_KEY` | Supabase service role key |
-| `ADMIN_API_KEY` | Secret for `GET /admin/metrics` (optional) |
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `SUPABASE_URL` | Yes | Supabase project URL |
+| `SUPABASE_KEY` | Yes | Supabase **service role** key (DB writes, RAG, metrics) |
+| `SUPABASE_ANON_KEY` | Yes | Supabase **anon** key for `auth.get_user()` token verification; backend refuses to boot without it |
+| `OPENAI_API_KEY` | Yes | OpenAI embeddings for RAG (`text-embedding-3-small`) |
+| `ANTHROPIC_API_KEY` | Yes | Claude generation |
+| `ALLOWED_ORIGINS` | Yes | Comma-separated frontend origins (e.g. `http://localhost:3000,https://debateai.dev`) |
+| `ENVIRONMENT` | No | Set to `production` on Railway to disable `/docs` and OpenAPI schema (default: `development`) |
+| `ADMIN_API_KEY` | No | Secret for `GET /admin/metrics` (optional) |
+
+See `backend/.env.example` for optional limit/model overrides.
 
 ### 2. Frontend
 
@@ -49,15 +57,24 @@ Open `http://localhost:3000`.
 
 **Frontend `.env.local` variables:**
 
-| Variable | Purpose |
-|----------|---------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
-| `NEXT_PUBLIC_API_URL` | Backend URL (default `http://localhost:8000`) |
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anon key (browser auth) |
+| `NEXT_PUBLIC_API_URL` | Dev default | Backend URL (defaults to `http://localhost:8000` in development; **required** in production builds) |
+| `NEXT_PUBLIC_SITE_URL` | No | Canonical site URL for metadata/OG tags (defaults to `https://debateai.dev`) |
+
+Example files: `frontend/.env.local.example` (local), `frontend/.env.production.example` (production).
 
 ## API
 
-**POST /generate**
+All user-facing endpoints require `Authorization: Bearer <supabase_access_token>` unless noted.
+
+### POST /generate — Server-Sent Events (SSE)
+
+Streams the assistant response as `text/event-stream`. Other endpoints return JSON.
+
+**Request** (`application/json`):
 
 ```json
 {
@@ -69,11 +86,38 @@ Open `http://localhost:3000`.
 }
 ```
 
-```json
-{ "output": "Fairness outweighs—it's a gateway issue..." }
+**Response** (`Content-Type: text/event-stream`):
+
+Each event is a line `data: <json>` followed by a blank line.
+
+Text chunks as they are generated:
+
+```
+data: {"type":"chunk","text":"Fairness outweighs"}
+
+data: {"type":"chunk","text":"—it's a gateway issue..."}
 ```
 
-**POST /feedback**
+Final event with usage metadata:
+
+```
+data: {"type":"done","model_tier":"premium","monthly_usage":12,"premium_monthly_limit":30,"notice":null}
+```
+
+- `model_tier`: `"premium"` (Sonnet) or `"standard"` (Haiku after monthly cap)
+- `monthly_usage`: count after this request was reserved
+- `premium_monthly_limit`: Sonnet monthly cap (default 30)
+- `notice`: one-time downgrade message when first crossing the cap, otherwise `null`
+
+On server-side generation failure (after streaming started):
+
+```
+data: {"type":"error","detail":"Generation failed","status":500}
+```
+
+Pre-stream errors (rate limit, auth, validation) return ordinary JSON with the appropriate HTTP status (e.g. `429` for daily limit).
+
+### POST /feedback
 
 ```json
 {
@@ -85,9 +129,36 @@ Open `http://localhost:3000`.
 }
 ```
 
+Response: `{"status":"ok"}`
+
 `curation_eligible` should be `true` only for feedback attached to the first user turn in a chat. This keeps follow-up prompts like "can you elaborate?" out of training curation.
 
-**GET /admin/metrics** (requires `ADMIN_API_KEY`)
+### POST /conversations/{conversation_id}/messages
+
+```json
+{ "role": "user", "content": "Why does fairness outweigh education?" }
+```
+
+Response: `{"status":"ok"}`
+
+### POST /generate-title
+
+```json
+{
+  "user_message": "Why does fairness outweigh education?",
+  "assistant_message": "Fairness outweighs because..."
+}
+```
+
+Response: `{"title": "Fairness vs Education"}`
+
+### POST /training-request
+
+`multipart/form-data` with `area` (required) and optional `file` attachment.
+
+Response: `{"status":"ok"}`
+
+### GET /admin/metrics (requires `ADMIN_API_KEY`)
 
 ```bash
 curl -H "Authorization: Bearer $ADMIN_API_KEY" \
@@ -120,6 +191,51 @@ curl -H "Authorization: Bearer $ADMIN_API_KEY" \
 
 Product metrics are computed from Supabase `messages`, `conversations`, `auth.users`, and `feedback`. You can also query `analytics.daily_metrics` directly in the Supabase SQL Editor.
 
+## Testing
+
+### Backend (pytest)
+
+```bash
+cd backend
+pip install -r requirements.txt -r requirements-dev.txt
+pytest
+```
+
+Or inside Docker (matches production):
+
+```bash
+docker build -t debateai-test .
+docker run --rm debateai-test sh -c 'pip install -r backend/requirements-dev.txt && cd backend && pytest'
+```
+
+### Frontend (Vitest + typecheck)
+
+```bash
+cd frontend
+npm run typecheck
+npm run test
+```
+
+### End-to-end smoke (Playwright)
+
+Requires a dedicated test user in the Supabase project. Set env vars (locally in `.env.local` or as GitHub Actions secrets):
+
+| Variable | Purpose |
+|----------|---------|
+| `E2E_USER_EMAIL` | Test account email |
+| `E2E_USER_PASSWORD` | Test account password |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
+| `NEXT_PUBLIC_API_URL` | Backend URL (mocked for `/generate` in the smoke test) |
+
+```bash
+cd frontend
+npx playwright install chromium
+npm run test:e2e
+```
+
+The smoke test performs a real Supabase login (required by the server-side session guard) and mocks only the backend `/generate` SSE stream so no Anthropic calls are made. In CI, the e2e job skips gracefully when the secrets above are absent.
+
 ## Project Structure
 
 ```
@@ -139,6 +255,8 @@ Product metrics are computed from Supabase `messages`, `conversations`, `auth.us
 ## Deployment
 
 The repo includes a `Dockerfile` and `railway.toml` for Railway deployment.
+
+**Before deploying:** ensure `SUPABASE_ANON_KEY` is set in Railway (backend refuses to boot without it). After the auth migration (localStorage → cookies), users may need to log in again.
 
 ## Roadmap
 

@@ -13,11 +13,24 @@ class AuthUser:
     email: str | None = None
 
 
+def ensure_auth_configured() -> None:
+    """Fail fast at startup when the anon key is missing.
+
+    Token verification must never fall back to SUPABASE_KEY (service role).
+    """
+    if not os.environ.get("SUPABASE_ANON_KEY"):
+        raise RuntimeError(
+            "SUPABASE_ANON_KEY is not set. Add it to the backend environment "
+            "(Supabase dashboard → Settings → API Keys)."
+        )
+
+
 def _get_auth_client() -> Client:
     global _auth_client
     if _auth_client is None:
+        ensure_auth_configured()
         url = os.environ["SUPABASE_URL"]
-        key = os.environ.get("SUPABASE_ANON_KEY") or os.environ["SUPABASE_KEY"]
+        key = os.environ["SUPABASE_ANON_KEY"]
         _auth_client = create_client(url, key)
     return _auth_client
 

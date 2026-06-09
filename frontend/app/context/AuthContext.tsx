@@ -12,15 +12,6 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-function setAuthCookie(authenticated: boolean) {
-  if (typeof document === "undefined") return;
-  if (authenticated) {
-    document.cookie = "debateai-auth=1; Path=/; Max-Age=2592000; SameSite=Lax";
-    return;
-  }
-  document.cookie = "debateai-auth=; Path=/; Max-Age=0; SameSite=Lax";
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,9 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } = await supabase.auth.getSession();
 
         if (isMounted) {
-          const nextUser = session?.user ?? null;
-          setUser(nextUser);
-          setAuthCookie(Boolean(nextUser));
+          setUser(session?.user ?? null);
         }
       } finally {
         if (isMounted) {
@@ -52,9 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!isMounted) return;
-      const nextUser = session?.user ?? null;
-      setUser(nextUser);
-      setAuthCookie(Boolean(nextUser));
+      setUser(session?.user ?? null);
       setLoading(false);
     });
 

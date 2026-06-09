@@ -16,6 +16,7 @@ _reseed_lock = threading.Lock()
 DATASET_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "ml", "dataset.tutor.jsonl")
 EMBEDDING_MODEL = "text-embedding-3-small"
 EMBED_BATCH_SIZE = 100
+EMBEDDING_CONTENT_VERSION = "input_output_v1"
 
 _openai_client: OpenAI | None = None
 _supabase_client: Client | None = None
@@ -52,8 +53,17 @@ def _file_hash(path: Path) -> str:
     return hashlib.md5(path.read_bytes()).hexdigest()
 
 
+def _dataset_fingerprint(path: Path) -> str:
+    """Include embedding content changes in the reseed fingerprint."""
+    return f"{EMBEDDING_CONTENT_VERSION}:{_file_hash(path)}"
+
+
+def _embedding_text(row: dict) -> str:
+    return f"Question: {row['input']}\n\nAnswer: {row['output']}"
+
+
 def _needs_reseed(path: Path) -> bool:
-    current_hash = _file_hash(path)
+    current_hash = _dataset_fingerprint(path)
     try:
         result = (
             _get_supabase()
@@ -92,7 +102,7 @@ def _seed_from_dataset_unlocked() -> int:
 
     for batch_start in range(0, len(rows_parsed), EMBED_BATCH_SIZE):
         batch = rows_parsed[batch_start : batch_start + EMBED_BATCH_SIZE]
-        embeddings = _embed_batch([r["input"] for r in batch])
+        embeddings = _embed_batch([_embedding_text(r) for r in batch])
         records = [
             {
                 "id": f"doc_{batch_start + i}",
@@ -105,7 +115,7 @@ def _seed_from_dataset_unlocked() -> int:
         sb.table("rag_embeddings").upsert(records).execute()
         logger.info("[rag] seeded batch %d–%d", batch_start, batch_start + len(batch) - 1)
 
-    current_hash = _file_hash(path)
+    current_hash = _dataset_fingerprint(path)
     sb.table("rag_metadata").upsert({"key": "dataset_hash", "value": current_hash}).execute()
     logger.info("[rag] seeded %d embeddings total", len(rows_parsed))
     return len(rows_parsed)

@@ -127,18 +127,22 @@ async def generate(
     valid_history = validate_history(req.history)
     prompt = req.prompt.strip()
 
-    try:
-        # Reserve the generation atomically BEFORE generating: the model tier
-        # is decided by the count this request claimed, so concurrent requests
-        # cannot both slip under the premium cap.
-        (monthly_usage, model, notice), context = await asyncio.gather(
-            asyncio.to_thread(reserve_generation, supabase, user.id),
-            retrieve(prompt, slot_query=prompt),
-        )
-    except HTTPException:
-        raise
-    except Exception:
-        logger.exception("generate prep failed user=%s", user.id)
+    # Reserve the generation atomically BEFORE generating: the model tier
+    # is decided by the count this request claimed, so concurrent requests
+    # cannot both slip under the premium cap. return_exceptions=True so a
+    # successful reservation can be refunded when the other prep step fails.
+    reserve_result, context = await asyncio.gather(
+        asyncio.to_thread(reserve_generation, supabase, user.id),
+        retrieve(prompt, slot_query=prompt),
+        return_exceptions=True,
+    )
+    if isinstance(reserve_result, BaseException):
+        logger.error("generate reserve failed user=%s", user.id, exc_info=reserve_result)
+        raise HTTPException(status_code=500, detail="Generation failed") from None
+    monthly_usage, model, notice = reserve_result
+    if isinstance(context, BaseException):
+        logger.error("generate retrieve failed user=%s", user.id, exc_info=context)
+        await asyncio.to_thread(refund_generation, supabase, user.id)
         raise HTTPException(status_code=500, detail="Generation failed") from None
 
     model_tier: Literal["premium", "standard"] = (

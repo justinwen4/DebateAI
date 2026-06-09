@@ -33,6 +33,9 @@ interface ChatAreaProps {
   scrollRef: RefObject<HTMLDivElement | null>;
   usageBanner: UsageBannerState | null;
   onDismissUsageBanner: () => void;
+  errorBanner?: string | null;
+  onDismissError?: () => void;
+  onRetry?: () => void;
 }
 
 export default function ChatArea({
@@ -52,6 +55,9 @@ export default function ChatArea({
   scrollRef,
   usageBanner,
   onDismissUsageBanner,
+  errorBanner = null,
+  onDismissError,
+  onRetry,
 }: ChatAreaProps) {
   return (
     <main className="flex-1 flex flex-col min-w-0 bg-background">
@@ -92,6 +98,34 @@ export default function ChatArea({
             >
               Dismiss
             </button>
+          </div>
+        </div>
+      ) : null}
+
+      {errorBanner ? (
+        <div className="shrink-0 border-b border-red-500/30 bg-red-500/10 px-6 py-3">
+          <div className="flex items-start justify-between gap-4">
+            <p className="text-sm leading-relaxed text-foreground">{errorBanner}</p>
+            <div className="flex shrink-0 items-center gap-3">
+              {onRetry ? (
+                <button
+                  type="button"
+                  onClick={onRetry}
+                  className="text-xs font-medium text-foreground underline-offset-4 hover:underline"
+                >
+                  Retry
+                </button>
+              ) : null}
+              {onDismissError ? (
+                <button
+                  type="button"
+                  onClick={onDismissError}
+                  className="text-xs font-medium text-muted transition-colors hover:text-foreground"
+                >
+                  Dismiss
+                </button>
+              ) : null}
+            </div>
           </div>
         </div>
       ) : null}

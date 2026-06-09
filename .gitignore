@@ -8,9 +8,7 @@
 __pycache__/
 *.pyc
 .venv/
-
-# ChromaDB (replaced by Supabase pgvector — no longer used)
-backend/chroma_db/
+.migrate-venv/
 
 # Node
 node_modules/
@@ -25,6 +23,12 @@ ml/data/train.jsonl
 ml/data/eval.jsonl
 ml/data/eval_raw.jsonl
 ml/audit_report.csv
+ml/raw_analytics.jsonl
+ml/review_batch*.jsonl
+ml/archive/
+
+# Local agent/tool state
+.superpowers/
 
 # OS
 .DS_Store

@@ -1,0 +1,12 @@
+# Allowlist: the image only needs the backend code. The tutor dataset is
+# private IP and deliberately NOT shipped — rag.py serves from the
+# already-seeded Supabase pgvector data when the file is absent.
+*
+!backend
+
+# Re-exclude junk and secrets inside backend/
+backend/.venv
+backend/__pycache__
+backend/**/__pycache__
+backend/.env*
+!backend/.env.example

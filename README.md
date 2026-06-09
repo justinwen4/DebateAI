@@ -10,7 +10,7 @@ A chatbot that generates high-quality, natural-sounding debate analytics in the 
 | Backend  | FastAPI, Python                     |
 | LLM      | Anthropic API (Claude Sonnet 4.6)   |
 | Auth/DB  | Supabase                            |
-| RAG      | ChromaDB (local vector store)       |
+| RAG      | Supabase pgvector                   |
 | Training | LoRA fine-tuning scaffold (`ml/train.py`) |
 
 ## Quick Start
@@ -127,7 +127,7 @@ Product metrics are computed from Supabase `messages`, `conversations`, `auth.us
   main.py              # FastAPI app
   services/
     llm.py             # Anthropic generation
-    rag.py             # ChromaDB retrieval
+    rag.py             # Supabase pgvector retrieval
 /frontend              # Next.js chat UI (Supabase auth)
 /ml
   dataset.tutor.jsonl  # debate training data (gitignored)

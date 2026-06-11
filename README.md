@@ -1,6 +1,21 @@
 # DebateAI — Debate Analytics Assistant
 
-A chatbot that generates high-quality, natural-sounding debate analytics in the style of competitive debaters. Dense reasoning, fluid prose, zero bullet points.
+**[debateai.dev](https://debateai.dev)** — live and in use by competitive debaters
+
+> An AI assistant that reasons like an elite debater — dense argumentation, fluid prose, zero bullet points. Built on a private corpus of 1,600+ curated debate analytics documents with real-time SSE streaming and a LoRA fine-tuning scaffold for future model specialization.
+
+**Partnered with [<!-- debate org name(s) here -->] · [<!-- N --> active users · <!-- N --> queries served]**
+
+### Why it's built differently
+
+| What | How |
+|------|-----|
+| **RAG over 1,600+ debate analytics docs** | Private JSONL corpus embedded with `text-embedding-3-small`, stored in Supabase pgvector, retrieved per-query to ground every response in real competitive evidence |
+| **SSE streaming** | `/generate` streams `text/event-stream` chunks with per-token delivery, usage metadata, and graceful tier-downgrade signalling — no polling, no blocked responses |
+| **LoRA fine-tuning scaffold** | `ml/train.py` + curated feedback loop (`/feedback` with `curation_eligible` flag) build toward a domain-specialized local model without depending on third-party APIs long-term |
+| **Production-grade CI** | Pytest · Vitest + typecheck · Playwright E2E smoke (real Supabase auth, mocked SSE) all gated in GitHub Actions; Docker + Railway deploy |
+
+---
 
 ## Stack
 

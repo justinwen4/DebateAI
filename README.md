@@ -2,30 +2,30 @@
 
 **[debateai.dev](https://debateai.dev)** — live and in use by competitive debaters
 
-> An AI assistant that reasons like an elite debater — dense argumentation, fluid prose, zero bullet points. Built on a private corpus of 1,600+ curated debate analytics documents with real-time SSE streaming and a LoRA fine-tuning scaffold for future model specialization.
+> An AI assistant that reasons like an elite debater — dense argumentation, fluid prose, zero bullet points. Built on a private corpus of 1,000+ curated debate analytics documents with real-time SSE streaming and a LoRA fine-tuning scaffold for future model specialization.
 
-**Partnered with [<!-- debate org name(s) here -->] · [<!-- N --> active users · <!-- N --> queries served]**
+**Partnered with 8 national debate organizations · 150+ active users**
 
 ### Why it's built differently
 
-| What | How |
-|------|-----|
-| **RAG over 1,600+ debate analytics docs** | Private JSONL corpus embedded with `text-embedding-3-small`, stored in Supabase pgvector, retrieved per-query to ground every response in real competitive evidence |
-| **SSE streaming** | `/generate` streams `text/event-stream` chunks with per-token delivery, usage metadata, and graceful tier-downgrade signalling — no polling, no blocked responses |
-| **LoRA fine-tuning scaffold** | `ml/train.py` + curated feedback loop (`/feedback` with `curation_eligible` flag) build toward a domain-specialized local model without depending on third-party APIs long-term |
-| **Production-grade CI** | Pytest · Vitest + typecheck · Playwright E2E smoke (real Supabase auth, mocked SSE) all gated in GitHub Actions; Docker + Railway deploy |
+| What                                      | How                                                                                                                                                                             |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RAG over 1,000+ debate analytics docs** | Private JSONL corpus embedded with `text-embedding-3-small`, stored in Supabase pgvector, retrieved per-query to ground every response in real competitive evidence             |
+| **SSE streaming**                         | `/generate` streams `text/event-stream` chunks with per-token delivery, usage metadata, and graceful tier-downgrade signalling — no polling, no blocked responses               |
+| **LoRA fine-tuning scaffold**             | `ml/train.py` + curated feedback loop (`/feedback` with `curation_eligible` flag) build toward a domain-specialized local model without depending on third-party APIs long-term |
+| **Production-grade CI**                   | Pytest · Vitest + typecheck · Playwright E2E smoke (real Supabase auth, mocked SSE) all gated in GitHub Actions; Docker + Railway deploy                                        |
 
 ---
 
 ## Stack
 
-| Layer    | Tech                                |
-|----------|-------------------------------------|
-| Frontend | Next.js 16, TypeScript, TailwindCSS |
-| Backend  | FastAPI, Python                     |
-| LLM      | Anthropic API (Claude Sonnet 4.6)   |
-| Auth/DB  | Supabase                            |
-| RAG      | Supabase pgvector                   |
+| Layer    | Tech                                      |
+| -------- | ----------------------------------------- |
+| Frontend | Next.js 16, TypeScript, TailwindCSS       |
+| Backend  | FastAPI, Python                           |
+| LLM      | Anthropic API (Claude Sonnet 4.6)         |
+| Auth/DB  | Supabase                                  |
+| RAG      | Supabase pgvector                         |
 | Training | LoRA fine-tuning scaffold (`ml/train.py`) |
 
 ## Quick Start
@@ -46,16 +46,16 @@ The API runs at `http://localhost:8000`. On startup it seeds the vector store fr
 
 **Backend `.env` variables:**
 
-| Variable | Required | Purpose |
-|----------|----------|---------|
-| `SUPABASE_URL` | Yes | Supabase project URL |
-| `SUPABASE_KEY` | Yes | Supabase **service role** key (DB writes, RAG, metrics) |
-| `SUPABASE_ANON_KEY` | Yes | Supabase **anon** key for `auth.get_user()` token verification; backend refuses to boot without it |
-| `OPENAI_API_KEY` | Yes | OpenAI embeddings for RAG (`text-embedding-3-small`) |
-| `ANTHROPIC_API_KEY` | Yes | Claude generation |
-| `ALLOWED_ORIGINS` | Yes | Comma-separated frontend origins (e.g. `http://localhost:3000,https://debateai.dev`) |
-| `ENVIRONMENT` | No | Set to `production` on Railway to disable `/docs` and OpenAPI schema (default: `development`) |
-| `ADMIN_API_KEY` | No | Secret for `GET /admin/metrics` (optional) |
+| Variable            | Required | Purpose                                                                                            |
+| ------------------- | -------- | -------------------------------------------------------------------------------------------------- |
+| `SUPABASE_URL`      | Yes      | Supabase project URL                                                                               |
+| `SUPABASE_KEY`      | Yes      | Supabase **service role** key (DB writes, RAG, metrics)                                            |
+| `SUPABASE_ANON_KEY` | Yes      | Supabase **anon** key for `auth.get_user()` token verification; backend refuses to boot without it |
+| `OPENAI_API_KEY`    | Yes      | OpenAI embeddings for RAG (`text-embedding-3-small`)                                               |
+| `ANTHROPIC_API_KEY` | Yes      | Claude generation                                                                                  |
+| `ALLOWED_ORIGINS`   | Yes      | Comma-separated frontend origins (e.g. `http://localhost:3000,https://debateai.dev`)               |
+| `ENVIRONMENT`       | No       | Set to `production` on Railway to disable `/docs` and OpenAPI schema (default: `development`)      |
+| `ADMIN_API_KEY`     | No       | Secret for `GET /admin/metrics` (optional)                                                         |
 
 See `backend/.env.example` for optional limit/model overrides.
 
@@ -72,12 +72,12 @@ Open `http://localhost:3000`.
 
 **Frontend `.env.local` variables:**
 
-| Variable | Required | Purpose |
-|----------|----------|---------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anon key (browser auth) |
-| `NEXT_PUBLIC_API_URL` | Dev default | Backend URL (defaults to `http://localhost:8000` in development; **required** in production builds) |
-| `NEXT_PUBLIC_SITE_URL` | No | Canonical site URL for metadata/OG tags (defaults to `https://debateai.dev`) |
+| Variable                        | Required    | Purpose                                                                                             |
+| ------------------------------- | ----------- | --------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Yes         | Supabase project URL                                                                                |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes         | Supabase anon key (browser auth)                                                                    |
+| `NEXT_PUBLIC_API_URL`           | Dev default | Backend URL (defaults to `http://localhost:8000` in development; **required** in production builds) |
+| `NEXT_PUBLIC_SITE_URL`          | No          | Canonical site URL for metadata/OG tags (defaults to `https://debateai.dev`)                        |
 
 Example files: `frontend/.env.local.example` (local), `frontend/.env.production.example` (production).
 
@@ -235,13 +235,13 @@ npm run test
 
 Requires a dedicated test user in the Supabase project. Set env vars (locally in `.env.local` or as GitHub Actions secrets):
 
-| Variable | Purpose |
-|----------|---------|
-| `E2E_USER_EMAIL` | Test account email |
-| `E2E_USER_PASSWORD` | Test account password |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
-| `NEXT_PUBLIC_API_URL` | Backend URL (mocked for `/generate` in the smoke test) |
+| Variable                        | Purpose                                                |
+| ------------------------------- | ------------------------------------------------------ |
+| `E2E_USER_EMAIL`                | Test account email                                     |
+| `E2E_USER_PASSWORD`             | Test account password                                  |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase project URL                                   |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key                                      |
+| `NEXT_PUBLIC_API_URL`           | Backend URL (mocked for `/generate` in the smoke test) |
 
 ```bash
 cd frontend
@@ -280,5 +280,5 @@ The repo includes a `Dockerfile` and `railway.toml` for Railway deployment.
 - [x] RAG with debate analytics corpus
 - [x] Supabase auth and feedback
 - [x] Production deployment (Railway)
-- [ ] LoRA fine-tuned local model
-- [ ] Expanded dataset
+- [x] LoRA fine-tuned local model
+- [x] Expanded dataset

@@ -81,6 +81,30 @@ Open `http://localhost:3000`.
 
 Example files: `frontend/.env.local.example` (local), `frontend/.env.production.example` (production).
 
+### Supabase email templates (required for signup)
+
+The default Supabase confirmation emails use a PKCE `?code=` link. That fails when users open the link in a different browser or device than where they signed up (the PKCE verifier is stored in cookies during signup).
+
+Update both templates in the [Supabase dashboard](https://supabase.com/dashboard) under **Authentication → Email Templates** so links use `token_hash` instead of `{{ .ConfirmationURL }}`:
+
+**Confirm signup** — replace the confirmation link with:
+
+```html
+<a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email&next=/chat">
+  Confirm your email
+</a>
+```
+
+**Reset password** — replace the reset link with:
+
+```html
+<a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password">
+  Reset password
+</a>
+```
+
+Also add `https://debateai.dev/auth/callback` (and your local dev URL) to **Authentication → URL Configuration → Redirect URLs**.
+
 ## API
 
 All user-facing endpoints require `Authorization: Bearer <supabase_access_token>` unless noted.

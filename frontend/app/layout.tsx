@@ -3,6 +3,7 @@ import { Libre_Franklin, Geist_Mono, Playfair_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
+import { AuthHashHandler } from "@/app/components/AuthHashHandler";
 import { AuthProvider } from "@/app/context/AuthContext";
 
 const sansBody = Libre_Franklin({
@@ -80,7 +81,10 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="h-full">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <AuthHashHandler />
+          {children}
+        </AuthProvider>
         <Analytics />
         <SpeedInsights />
       </body>

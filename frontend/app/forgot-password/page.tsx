@@ -20,6 +20,7 @@ export default function ForgotPasswordPage() {
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      // Must match a Supabase redirect URL; the email template adds token_hash (see README).
       redirectTo: `${siteUrl}/auth/callback?next=/reset-password`,
     });
 

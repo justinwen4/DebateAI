@@ -18,19 +18,16 @@ export async function proxy(request: NextRequest) {
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options),
           );
-          // Cache headers that prevent CDNs from serving one user's
-          // refreshed session cookies to another user.
           Object.entries(headers).forEach(([key, value]) => response.headers.set(key, value));
         },
       },
     },
   );
 
-  // getClaims() verifies the JWT signature against the project's published
-  // keys — unlike getSession(), it cannot be satisfied by a forged cookie.
+  // Refresh the session on every matched request so auth cookies stay in sync.
   const { data, error } = await supabase.auth.getClaims();
 
-  if (error || !data?.claims) {
+  if (request.nextUrl.pathname.startsWith("/chat") && (error || !data?.claims)) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", request.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);
@@ -40,5 +37,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/chat"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

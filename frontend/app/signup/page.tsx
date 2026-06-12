@@ -34,7 +34,8 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${siteUrl}/auth/callback`,
+        // Must match a Supabase redirect URL; the email template adds token_hash (see README).
+        emailRedirectTo: `${siteUrl}/auth/callback?next=/chat`,
       },
     });
 

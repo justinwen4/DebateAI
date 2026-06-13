@@ -44,7 +44,7 @@ export default function AppRating() {
   const [submitted, setSubmitted] = useState(false);
 
   return (
-    <section className="bg-[#1a2332] border-t border-white/10">
+    <section className="bg-[#141d2a] border-t border-white/10">
       <div className="mx-auto grid w-full max-w-6xl gap-14 px-6 py-16 md:grid-cols-2 md:gap-10">
 
         {/* GitHub Star */}

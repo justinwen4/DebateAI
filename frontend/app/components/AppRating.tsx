@@ -48,7 +48,7 @@ export default function AppRating() {
       <div className="mx-auto grid w-full max-w-6xl gap-14 px-6 py-16 md:grid-cols-2 md:gap-10">
 
         {/* GitHub Star */}
-        <article className="space-y-4 border-l-2 border-accent pl-6">
+        <article className="space-y-4 border-t-2 border-accent pt-6">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-accent">Open Source</p>
           <h3 className="font-[family-name:var(--font-display)] text-5xl leading-[0.95] tracking-tight text-white">
             Star on GitHub
@@ -69,7 +69,7 @@ export default function AppRating() {
         </article>
 
         {/* Star Rating */}
-        <article className="space-y-4 border-l-2 border-accent pl-6">
+        <article className="space-y-4 border-t-2 border-accent pt-6">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-accent">Rate DebateAI</p>
           <h3 className="font-[family-name:var(--font-display)] text-5xl leading-[0.95] tracking-tight text-white">
             How are we doing?

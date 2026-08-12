@@ -74,6 +74,20 @@ def _sanitize_history(history: list[dict[str, str]] | None) -> list[dict[str, st
     return sanitized[-MAX_HISTORY_TURNS:]
 
 
+def _chat_request_kwargs(model: str) -> dict:
+    """Build model-specific Messages API kwargs.
+
+    Claude Sonnet 5 rejects non-default sampling params and enables adaptive
+    thinking by default; disable thinking so max_tokens covers the short reply.
+    """
+    kwargs: dict = {"model": model, "max_tokens": 300}
+    if model.startswith("claude-sonnet-5"):
+        kwargs["thinking"] = {"type": "disabled"}
+    else:
+        kwargs["temperature"] = 0.2
+    return kwargs
+
+
 def _generate_response_sync(
     prompt: str,
     context: str = "",
@@ -84,11 +98,9 @@ def _generate_response_sync(
     system, messages = _build_messages(prompt, context, history)
 
     msg = _get_client().messages.create(
-        model=model,
         system=system,
         messages=messages,
-        temperature=0.2,
-        max_tokens=300,
+        **_chat_request_kwargs(model),
     )
     parts = [block.text for block in msg.content if block.type == "text"]
     return "".join(parts).strip()
@@ -121,11 +133,9 @@ def stream_generate_response_sync(
     system, messages = _build_messages(prompt, context, history)
 
     with _get_client().messages.stream(
-        model=model,
         system=system,
         messages=messages,
-        temperature=0.2,
-        max_tokens=300,
+        **_chat_request_kwargs(model),
     ) as stream:
         yield from stream.text_stream
 

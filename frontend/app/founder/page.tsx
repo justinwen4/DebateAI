@@ -9,17 +9,6 @@ const founderStats = [
   { label: "12 Bid Tournaments Championed/Finalled" },
 ];
 
-const contributors = [
-  {
-    name: "Miller Roberts",
-    stats: ["Emory Finalist", "TOC Quarterfinalist", "Bid Leader"],
-  },
-  {
-    name: "Aidan Etkin",
-    stats: ["Coached champions of the TOC, TFA, and Harvard"],
-  },
-];
-
 export default function FounderPage() {
   return (
     <main className="min-h-full bg-background text-foreground">
@@ -92,24 +81,6 @@ export default function FounderPage() {
               championed or finalled 12 bid tournaments.
             </p>
 
-          </div>
-        </div>
-
-        <div className="border-t border-white/10 pt-16 md:pt-20">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-accent">Contributors</p>
-          <div className="mt-10 grid gap-12 md:grid-cols-2 md:gap-14">
-            {contributors.map((contributor) => (
-              <article key={contributor.name} className="space-y-5">
-                <div className="space-y-3 border-l-2 border-accent pl-6">
-                  <h2 className="font-[family-name:var(--font-display)] text-3xl leading-tight tracking-tight text-white sm:text-4xl">
-                    {contributor.name}
-                  </h2>
-                </div>
-                <p className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium leading-relaxed text-white/90">
-                  {contributor.stats.join(" · ")}
-                </p>
-              </article>
-            ))}
           </div>
         </div>
 
